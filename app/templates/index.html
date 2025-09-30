@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}GivSimple - Dynamic NFC Redirect Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-qrcode fa-4x text-primary mb-4"></i>
+                <h1 class="card-title">GivSimple</h1>
+                <p class="card-text lead">Dynamic NFC Redirect Service</p>
+                <p class="text-muted">Service is running and ready to handle token redirects.</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('admin.login') }}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Admin Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

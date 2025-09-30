@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=postgresql://givsimple:givsimple@db:5432/givsimple
+      - REDIS_URL=redis://redis:6379/0
+      - MAIL_HOST=${MAIL_HOST:-localhost}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER:-noreply@givsimple.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@givsimple.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./migrations:/app/migrations
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=givsimple
+      - POSTGRES_USER=givsimple
+      - POSTGRES_PASSWORD=givsimple
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # Optional: Mail development server
+  maildev:
+    image: maildev/maildev:latest
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    environment:
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
