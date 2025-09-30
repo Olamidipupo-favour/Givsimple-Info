@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - GivSimple{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+    <div>
+        <a href="{{ url_for('admin.import_csv') }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-upload me-1"></i>Import CSV
+        </a>
+        <a href="{{ url_for('admin.export_csv') }}" class="btn btn-outline-success">
+            <i class="fas fa-download me-1"></i>Export CSV
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_tags }}</h4>
+                        <p class="card-text">Total Tags</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tags fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ active_tags }}</h4>
+                        <p class="card-text">Active Tags</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ unassigned_tags }}</h4>
+                        <p class="card-text">Unassigned</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ blocked_tags }}</h4>
+                        <p class="card-text">Blocked</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-ban fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activations -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Recent Activations
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activations %}
+                    <div class="list-group list-group-flush">
+                        {% for activation in recent_activations %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ activation.tag.token }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ activation.user.name }} - {{ activation.payment_provider.value }}
+                                </small>
+                            </div>
+                            <small class="text-muted">
+                                {{ activation.created_at.strftime('%m/%d %H:%M') }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent activations</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_logs %}
+                    <div class="list-group list-group-flush">
+                        {% for log in recent_logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ log.action }}</strong>
+                                    {% if log.tag %}
+                                        <span class="badge bg-secondary">{{ log.tag.token }}</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    {{ log.created_at.strftime('%m/%d %H:%M') }}
+                                </small>
+                            </div>
+                            <div class="text-muted">
+                                <small>by {{ log.actor }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent activity</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+Your GivSimple Device is Ready!
+
+Hi {{ user_name }},
+
+Great news! Your GivSimple device has been successfully activated and is now ready to receive payments.
+
+Device Information:
+- Token: {{ token }}
+- Payment URL: {{ payment_url }}
+
+Your device will now redirect users to your payment page when they scan your NFC tag or visit your redirect URL.
+
+How it works:
+1. Users scan your NFC tag or visit your redirect URL
+2. They are automatically redirected to your payment page
+3. They can send you payments using their preferred method
+
+If you have any questions or need support, please don't hesitate to contact us.
+
+Best regards,
+The GivSimple Team
+
+---
+This email was sent because you activated a GivSimple device.
+© 2024 GivSimple. All rights reserved.

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Activate Your Device - GivSimple{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-mobile-alt me-2"></i>Activate Your Device
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if already_active %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This token is already activated and ready to use.
+                    </div>
+                {% else %}
+                    <form method="POST" action="{{ url_for('api.activate') }}">
+                        {{ csrf_token() }}
+                        <input type="hidden" name="token" value="{{ token }}">
+                        
+                        <div class="mb-3">
+                            <label for="token" class="form-label">Device Token</label>
+                            <input type="text" class="form-control" id="token" name="token" 
+                                   value="{{ token }}" readonly>
+                            <div class="form-text">This is your unique device identifier.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   required maxlength="100">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required maxlength="120">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number (Optional)</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   maxlength="20" placeholder="+1 (555) 123-4567">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="payment_handle" class="form-label">Payment Handle/URL *</label>
+                            <input type="text" class="form-control" id="payment_handle" name="payment_handle" 
+                                   required maxlength="500" 
+                                   placeholder="e.g., $yourhandle, @username, or https://paypal.me/name">
+                            <div class="form-text">
+                                Enter your Cash App ($handle), PayPal (paypal.me/name), Venmo (@username), 
+                                or any payment URL you'd like to receive payments at.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Activate Device
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>How it works
+                </h6>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Enter your payment information</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Your device will redirect to your payment page</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Receive payments directly to your account</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit form handling
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Activating...';
+            submitBtn.disabled = true;
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to payment URL
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('Error: ' + data.error);
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

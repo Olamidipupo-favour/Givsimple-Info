@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Tag Management - GivSimple{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tags me-2"></i>Tag Management</h2>
+    <a href="{{ url_for('admin.import_csv') }}" class="btn btn-primary">
+        <i class="fas fa-upload me-1"></i>Import CSV
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="query" class="form-label">Search Token</label>
+                <input type="text" class="form-control" id="query" name="query" 
+                       value="{{ search_form.query.data or '' }}" placeholder="Enter token...">
+            </div>
+            <div class="col-md-4">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="unassigned" {% if search_form.status.data == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                    <option value="registered" {% if search_form.status.data == 'registered' %}selected{% endif %}>Registered</option>
+                    <option value="active" {% if search_form.status.data == 'active' %}selected{% endif %}>Active</option>
+                    <option value="blocked" {% if search_form.status.data == 'blocked' %}selected{% endif %}>Blocked</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tags Table -->
+<div class="card">
+    <div class="card-body">
+        {% if tags %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Status</th>
+                            <th>Target URL</th>
+                            <th>Buyer</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tag in tags %}
+                        <tr>
+                            <td>
+                                <code>{{ tag.token }}</code>
+                            </td>
+                            <td>
+                                {% if tag.status.value == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                {% elif tag.status.value == 'unassigned' %}
+                                    <span class="badge bg-warning">Unassigned</span>
+                                {% elif tag.status.value == 'registered' %}
+                                    <span class="badge bg-info">Registered</span>
+                                {% elif tag.status.value == 'blocked' %}
+                                    <span class="badge bg-danger">Blocked</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tag.target_url %}
+                                    <a href="{{ tag.target_url }}" target="_blank" class="text-decoration-none">
+                                        {{ tag.target_url[:50] }}{% if tag.target_url|length > 50 %}...{% endif %}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tag.buyer %}
+                                    <div>
+                                        <strong>{{ tag.buyer.name }}</strong><br>
+                                        <small class="text-muted">{{ tag.buyer.email }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ tag.created_at.strftime('%m/%d/%Y %H:%M') }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.tag_detail', tag_id=tag.id) }}" 
+                                       class="btn btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.edit_tag', tag_id=tag.id) }}" 
+                                       class="btn btn-outline-secondary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.block_tag', tag_id=tag.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <button type="submit" class="btn btn-outline-{{ 'success' if tag.status.value == 'blocked' else 'danger' }}" 
+                                                title="{{ 'Unblock' if tag.status.value == 'blocked' else 'Block' }}">
+                                            <i class="fas fa-{{ 'check' if tag.status.value == 'blocked' else 'ban' }}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Tags pagination">
+                {{ pagination.links }}
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No tags found</h5>
+                <p class="text-muted">Try adjusting your search criteria or import some tags.</p>
+                <a href="{{ url_for('admin.import_csv') }}" class="btn btn-primary">
+                    <i class="fas fa-upload me-1"></i>Import CSV
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
