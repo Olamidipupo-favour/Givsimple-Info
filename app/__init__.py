@@ -6,6 +6,10 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 import redis
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -31,9 +35,15 @@ def create_app(config_name=None):
     # Initialize rate limiter
     try:
         redis_client = redis.from_url(app.config['REDIS_URL'])
-        limiter.init_app(app, storage_uri=app.config['REDIS_URL'])
+        # Test Redis connection
+        redis_client.ping()
+        # Configure limiter with Redis
+        app.config['RATELIMIT_STORAGE_URL'] = app.config['REDIS_URL']
+        limiter.init_app(app)
     except Exception as e:
         app.logger.warning(f"Redis not available, using in-memory rate limiter: {e}")
+        # Use in-memory storage
+        app.config['RATELIMIT_STORAGE_URL'] = 'memory://'
         limiter.init_app(app)
     
     # Register blueprints
@@ -45,8 +55,15 @@ def create_app(config_name=None):
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     
-    # Create tables
+    # Create tables and initialize admin user
     with app.app_context():
         db.create_all()
+        
+        # Create default admin user if none exists
+        from app.auth import create_default_admin
+        try:
+            create_default_admin()
+        except Exception as e:
+            app.logger.error(f"Failed to create default admin: {e}")
     
     return app

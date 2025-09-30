@@ -5,38 +5,55 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 install: ## Install dependencies
-	pip install -r requirements.txt
+	uv sync
+	uv pip install -r requirements.txt
+	@if [ ! -f ".env" ]; then \
+		echo "Creating .env file from template..."; \
+		cp env.example .env; \
+	fi
 
 init-db: ## Initialize database
-	flask db init
-	flask db migrate -m "Initial migration"
-	flask db upgrade
+	@if [ ! -d "migrations" ]; then \
+		echo "Initializing migrations..."; \
+		FLASK_ENV=development uv run flask db init; \
+	else \
+		echo "Migrations directory already exists, skipping init..."; \
+	fi
+	@echo "Creating migration..."
+	FLASK_ENV=development uv run flask db migrate -m "Initial migration" || echo "Migration already exists or no changes detected"
+	@echo "Applying migrations..."
+	FLASK_ENV=development uv run flask db upgrade
 
 run: ## Run the application
-	flask run --host=0.0.0.0 --port=8000
+	FLASK_ENV=development uv run flask run --host=0.0.0.0 --port=8000
 
 dev: ## Run in development mode
-	FLASK_ENV=development flask run --host=0.0.0.0 --port=8000 --reload
+	FLASK_ENV=development uv run flask run --host=0.0.0.0 --port=8000 --reload
 
 test: ## Run tests
-	pytest -v --cov=app tests/
+	uv run pytest -v --cov=app tests/
 
 test-html: ## Run tests with HTML coverage report
 	pytest --cov=app --cov-report=html tests/
 	@echo "Coverage report generated in htmlcov/"
 
 lint: ## Run linters
-	flake8 app/ tests/
-	black --check app/ tests/
+	uv run flake8 app/ tests/
+	uv run black --check app/ tests/
 
 format: ## Format code
-	black app/ tests/
+	uv run black app/ tests/
 
 clean: ## Clean up temporary files
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 	rm -rf .coverage htmlcov/ .pytest_cache/
+
+clean-db: ## Clean database and migrations
+	rm -rf migrations/
+	rm -f *.db
+	rm -f givsimple.db
 
 docker-build: ## Build Docker image
 	docker-compose build
@@ -57,22 +74,25 @@ docker-db-shell: ## Open database shell
 	docker-compose exec db psql -U givsimple -d givsimple
 
 migrate: ## Run database migrations
-	flask db upgrade
+	uv run flask db upgrade
 
 create-migration: ## Create new migration
 	@read -p "Enter migration message: " msg; \
-	flask db migrate -m "$$msg"
+	uv run flask db migrate -m "$$msg"
 
 import-tags: ## Import tags from CSV (requires CSV file)
 	@if [ -z "$(FILE)" ]; then \
 		echo "Usage: make import-tags FILE=path/to/tags.csv"; \
 		exit 1; \
 	fi
-	python scripts/import_tags.py $(FILE)
+	uv run python scripts/import_tags.py $(FILE)
 
 export-tags: ## Export tags to CSV
-	python scripts/export_tags.py
+	uv run python scripts/export_tags.py
 
-setup: install init-db ## Complete setup (install + init-db)
+create-admin: ## Create admin user
+	FLASK_ENV=development uv run python scripts/create_admin.py
+
+setup: install init-db create-admin ## Complete setup (install + init-db + create-admin)
 
 ci: lint test ## Run CI checks (lint + test)
