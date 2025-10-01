@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Token Not Found - GivSimple{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+                </div>
+                
+                <h1 class="display-4 mb-3">Token Not Found</h1>
+                <p class="lead text-muted mb-4">
+                    The NFC token you're looking for doesn't exist or has been deactivated.
+                </p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Possible reasons:</strong>
+                    <ul class="list-unstyled mt-2 mb-0">
+                        <li>• The token has been blocked or deactivated</li>
+                        <li>• The token was never registered</li>
+                        <li>• The URL was typed incorrectly</li>
+                    </ul>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('public.index') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-home me-1"></i>Go Home
+                    </a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Go Back
+                    </button>
+                </div>
+                
+                <div class="mt-4">
+                    <small class="text-muted">
+                        If you believe this is an error, please contact support.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

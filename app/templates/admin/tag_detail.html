@@ -63,10 +63,20 @@
                 </dl>
                 
                 <div class="mt-3">
-                    <a href="{{ url_for('public.redirect_token', token=tag.token) }}" 
-                       target="_blank" class="btn btn-outline-primary">
-                        <i class="fas fa-external-link-alt me-1"></i>Test Redirect
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button onclick="copyLink(event)" class="btn btn-outline-primary">
+                            <i class="fas fa-copy me-1"></i>Copy Link
+                        </button>
+                        <button onclick="downloadQR(event)" class="btn btn-outline-success">
+                            <i class="fas fa-download me-1"></i>Download QR
+                        </button>
+                    </div>
+                    
+                    <!-- QR Code Display -->
+                    <div class="text-center">
+                        <div id="qrcode" class="mb-2"></div>
+                        <small class="text-muted">QR Code for {{ tag.token }}</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -165,9 +175,14 @@
                                     </h6>
                                     {% if log.meta %}
                                         <small class="text-muted">
-                                            {% for key, value in log.meta.items() %}
-                                                <strong>{{ key }}:</strong> {{ value }}{% if not loop.last %}, {% endif %}
-                                            {% endfor %}
+                                            {% set meta_dict = log.meta | from_json %}
+                                            {% if meta_dict %}
+                                                {% for key, value in meta_dict.items() %}
+                                                    <strong>{{ key }}:</strong> {{ value }}{% if not loop.last %}, {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {{ log.meta }}
+                                            {% endif %}
                                         </small>
                                     {% endif %}
                                 </div>
@@ -183,4 +198,134 @@
         </div>
     </div>
 </div>
+
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<script>
+// Generate QR Code
+document.addEventListener('DOMContentLoaded', function() {
+    const token = '{{ tag.token }}';
+    const redirectUrl = window.location.origin + '/t/' + token;
+    
+    // Generate QR code
+    QRCode.toCanvas(document.getElementById('qrcode'), redirectUrl, {
+        width: 200,
+        height: 200,
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    }, function (error) {
+        if (error) console.error('QR Code generation failed:', error);
+    });
+});
+
+// Copy link to clipboard
+function copyLink(event) {
+    const token = '{{ tag.token }}';
+    const redirectUrl = window.location.origin + '/t/' + token;
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(redirectUrl).then(function() {
+            showCopySuccess(event);
+        }).catch(function(err) {
+            console.error('Clipboard API failed: ', err);
+            fallbackCopyTextToClipboard(redirectUrl, event);
+        });
+    } else {
+        // Fallback for older browsers or non-secure contexts
+        fallbackCopyTextToClipboard(redirectUrl, event);
+    }
+}
+
+// Fallback copy method
+function fallbackCopyTextToClipboard(text, event) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showCopySuccess(event);
+        } else {
+            alert('Failed to copy link. Please copy manually: ' + text);
+        }
+    } catch (err) {
+        console.error('Fallback copy failed: ', err);
+        alert('Failed to copy link. Please copy manually: ' + text);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Show copy success feedback
+function showCopySuccess(event) {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+    button.classList.remove('btn-outline-primary');
+    button.classList.add('btn-success');
+    
+    setTimeout(function() {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-primary');
+    }, 2000);
+}
+
+// Download QR Code
+function downloadQR(event) {
+    const token = '{{ tag.token }}';
+    const redirectUrl = window.location.origin + '/t/' + token;
+    
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
+    button.disabled = true;
+    
+    // Create canvas for download
+    const canvas = document.createElement('canvas');
+    QRCode.toCanvas(canvas, redirectUrl, {
+        width: 400,
+        height: 400,
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    }, function (error) {
+        // Reset button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        if (error) {
+            console.error('QR Code generation failed:', error);
+            alert('Failed to generate QR code: ' + error.message);
+            return;
+        }
+        
+        try {
+            // Download the canvas as PNG
+            const link = document.createElement('a');
+            link.download = `givsimple-qr-${token}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (downloadError) {
+            console.error('Download failed:', downloadError);
+            alert('Failed to download QR code');
+        }
+    });
+}
+</script>
 {% endblock %}

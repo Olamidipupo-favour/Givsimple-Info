@@ -20,7 +20,7 @@ def redirect_token(token):
     token = sanitize_input(token)
     
     if not token or len(token) < 8 or len(token) > 16:
-        abort(404)
+        return render_template('404.html'), 404
     
     # Find the tag
     tag = Tag.query.filter_by(token=token).first()
@@ -28,7 +28,7 @@ def redirect_token(token):
     if not tag:
         # Log the attempt
         AuditLog.log('system', 'token_not_found', None, {'token': token, 'ip': request.remote_addr})
-        abort(404)
+        return render_template('404.html'), 404
     
     # Log the access
     AuditLog.log('system', 'token_accessed', tag.id, {
@@ -38,17 +38,35 @@ def redirect_token(token):
         'user_agent': request.headers.get('User-Agent', '')
     })
     
-    if tag.status == TagStatus.ACTIVE and tag.target_url:
-        # Tag is active and has a target URL - redirect to it
-        return redirect(tag.target_url, code=301)
+    # Check status and handle accordingly
+    if tag.status == TagStatus.BLOCKED:
+        # Tag is blocked - return 404 to hide its existence
+        return render_template('404.html'), 404
+    
+    elif tag.status == TagStatus.ACTIVE and tag.target_url:
+        # Tag is active and has a target URL - show countdown page
+        # Detect payment platform for display
+        payment_platform = "Payment Platform"
+        if "cash.app" in tag.target_url.lower():
+            payment_platform = "Cash App"
+        elif "paypal.me" in tag.target_url.lower() or "paypal.com" in tag.target_url.lower():
+            payment_platform = "PayPal"
+        elif "venmo.com" in tag.target_url.lower():
+            payment_platform = "Venmo"
+        elif "zelle" in tag.target_url.lower():
+            payment_platform = "Zelle"
+        elif "apple.com" in tag.target_url.lower():
+            payment_platform = "Apple Pay"
+        elif "google.com" in tag.target_url.lower():
+            payment_platform = "Google Pay"
+        
+        return render_template('redirect_countdown.html', 
+                             target_url=tag.target_url,
+                             payment_platform=payment_platform)
     
     elif tag.status == TagStatus.UNASSIGNED:
         # Tag exists but is unassigned - redirect to activation page
         return redirect(url_for('public.activate', token=token), code=302)
-    
-    elif tag.status == TagStatus.BLOCKED:
-        # Tag is blocked - return 404 to hide its existence
-        abort(404)
     
     elif tag.status == TagStatus.REGISTERED:
         # Tag is registered but not active - redirect to activation
@@ -56,7 +74,7 @@ def redirect_token(token):
     
     else:
         # Unknown status - treat as not found
-        abort(404)
+        return render_template('404.html'), 404
 
 @public_bp.route('/activate')
 def activate():

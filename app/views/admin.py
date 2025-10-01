@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, current_app
 from flask_paginate import Pagination, get_page_args
 from app.models import Tag, User, Activation, TagStatus, AdminUser, AuditLog
-from app.schemas import AdminLoginForm, TagEditForm, CSVImportForm, SearchForm
+from app.schemas import AdminLoginForm, TagEditForm, CSVImportForm
 from app.utils.security import admin_required, get_current_admin, log_admin_action, sanitize_input
 from app import db
 import csv
@@ -81,29 +81,32 @@ def dashboard():
 @admin_required
 def tags():
     """Tag management page"""
-    search_form = SearchForm()
     page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page', per_page=20)
     
     # Build query
     query = Tag.query
     
     # Apply search filters
-    if search_form.query.data:
-        search_term = f"%{search_form.query.data}%"
+    if request.args.get('query'):
+        search_term = f"%{request.args.get('query')}%"
         query = query.filter(Tag.token.like(search_term))
     
-    if search_form.status.data:
-        query = query.filter(Tag.status == TagStatus(search_form.status.data))
+    if request.args.get('status'):
+        query = query.filter(Tag.status == TagStatus(request.args.get('status')))
     
     # Get paginated results
     tags = query.order_by(Tag.created_at.desc()).offset(offset).limit(per_page).all()
     total = query.count()
     
-    pagination = Pagination(page=page, per_page=per_page, total=total, css_framework='bootstrap4')
+    # Create pagination object safely
+    try:
+        pagination = Pagination(page=page, per_page=per_page, total=total, css_framework='bootstrap4')
+    except Exception as e:
+        current_app.logger.error(f"Pagination error: {e}")
+        pagination = None
     
     return render_template('admin/tags.html', 
                          tags=tags, 
-                         search_form=search_form,
                          pagination=pagination)
 
 @admin_bp.route('/tags/<int:tag_id>')
