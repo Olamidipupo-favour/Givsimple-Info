@@ -17,16 +17,16 @@
             <div class="col-md-4">
                 <label for="query" class="form-label">Search Token</label>
                 <input type="text" class="form-control" id="query" name="query" 
-                       value="{{ search_form.query.data or '' }}" placeholder="Enter token...">
+                       value="{{ request.args.get('query', '') }}" placeholder="Enter token...">
             </div>
             <div class="col-md-4">
                 <label for="status" class="form-label">Status</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">All Statuses</option>
-                    <option value="unassigned" {% if search_form.status.data == 'unassigned' %}selected{% endif %}>Unassigned</option>
-                    <option value="registered" {% if search_form.status.data == 'registered' %}selected{% endif %}>Registered</option>
-                    <option value="active" {% if search_form.status.data == 'active' %}selected{% endif %}>Active</option>
-                    <option value="blocked" {% if search_form.status.data == 'blocked' %}selected{% endif %}>Blocked</option>
+                    <option value="unassigned" {% if request.args.get('status') == 'unassigned' %}selected{% endif %}>Unassigned</option>
+                    <option value="registered" {% if request.args.get('status') == 'registered' %}selected{% endif %}>Registered</option>
+                    <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                    <option value="blocked" {% if request.args.get('status') == 'blocked' %}selected{% endif %}>Blocked</option>
                 </select>
             </div>
             <div class="col-md-4">
@@ -108,6 +108,7 @@
                                     </a>
                                     <form method="POST" action="{{ url_for('admin.block_tag', tag_id=tag.id) }}" 
                                           class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-outline-{{ 'success' if tag.status.value == 'blocked' else 'danger' }}" 
                                                 title="{{ 'Unblock' if tag.status.value == 'blocked' else 'Block' }}">
                                             <i class="fas fa-{{ 'check' if tag.status.value == 'blocked' else 'ban' }}"></i>
@@ -122,7 +123,7 @@
             </div>
             
             <!-- Pagination -->
-            {% if pagination.pages > 1 %}
+            {% if pagination and pagination.links %}
             <nav aria-label="Tags pagination">
                 {{ pagination.links }}
             </nav>

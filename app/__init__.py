@@ -32,6 +32,19 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     csrf.init_app(app)
     
+    # Initialize email
+    from app.email import init_mail
+    init_mail(app)
+    
+    # Add custom Jinja2 filters
+    import json
+    @app.template_filter('from_json')
+    def from_json_filter(json_string):
+        try:
+            return json.loads(json_string)
+        except (json.JSONDecodeError, TypeError):
+            return None
+    
     # Initialize rate limiter
     try:
         redis_client = redis.from_url(app.config['REDIS_URL'])
