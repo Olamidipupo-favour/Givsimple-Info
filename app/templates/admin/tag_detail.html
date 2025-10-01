@@ -2,6 +2,12 @@
 
 {% block title %}Tag Details - {{ tag.token }} - GivSimple{% endblock %}
 
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>
@@ -74,7 +80,11 @@
                     
                     <!-- QR Code Display -->
                     <div class="text-center">
-                        <div id="qrcode" class="mb-2"></div>
+                        <div id="qrcode" class="mb-2" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Generating QR Code...</span>
+                            </div>
+                        </div>
                         <small class="text-muted">QR Code for {{ tag.token }}</small>
                     </div>
                 </div>
@@ -199,26 +209,91 @@
     </div>
 </div>
 
-<!-- QR Code Library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- QR Code Library - Using qrious for better reliability -->
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js?v={{ range(1000, 9999) | random }}"></script>
 
 <script>
-// Generate QR Code
-document.addEventListener('DOMContentLoaded', function() {
+// Generate QR Code using QRious library
+function generateQRCode() {
     const token = '{{ tag.token }}';
     const redirectUrl = window.location.origin + '/t/' + token;
+    const qrContainer = document.getElementById('qrcode');
     
-    // Generate QR code
-    QRCode.toCanvas(document.getElementById('qrcode'), redirectUrl, {
-        width: 200,
-        height: 200,
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    }, function (error) {
-        if (error) console.error('QR Code generation failed:', error);
-    });
+    if (!qrContainer) {
+        console.error('QR code container not found');
+        return;
+    }
+    
+    // Clear any existing content
+    qrContainer.innerHTML = '';
+    
+    try {
+        // Create canvas element
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        
+        // Generate QR code using QRious
+        const qr = new QRious({
+            element: canvas,
+            value: redirectUrl,
+            size: 200,
+            background: 'white',
+            foreground: 'black'
+        });
+        
+        // Add canvas to container
+        qrContainer.appendChild(canvas);
+        console.log('QR Code generated successfully');
+        
+    } catch (error) {
+        console.error('QR Code generation failed:', error);
+        qrContainer.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Failed to generate QR code</div>';
+    }
+}
+
+// Wait for QRious library to load
+function waitForQRious() {
+    if (typeof QRious !== 'undefined') {
+        console.log('QRious library loaded successfully');
+        generateQRCode();
+    } else {
+        console.log('Waiting for QRious library...');
+        setTimeout(waitForQRious, 100);
+    }
+}
+
+// Start when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, starting QR code generation...');
+    
+    // Check if QRious is available immediately
+    if (typeof QRious !== 'undefined') {
+        console.log('QRious library already available, generating QR code...');
+        generateQRCode();
+    } else {
+        console.log('QRious not yet available, waiting...');
+        // Wait for library to load with timeout
+        setTimeout(() => {
+            if (typeof QRious !== 'undefined') {
+                generateQRCode();
+            } else {
+                console.error('QRious library failed to load within timeout');
+                const qrContainer = document.getElementById('qrcode');
+                if (qrContainer) {
+                    qrContainer.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            QR code generation unavailable. Please refresh the page.
+                        </div>
+                    `;
+                }
+            }
+        }, 3000);
+        
+        // Also try the polling approach
+        waitForQRious();
+    }
 });
 
 // Copy link to clipboard
@@ -292,40 +367,42 @@ function downloadQR(event) {
     button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
     button.disabled = true;
     
-    // Create canvas for download
-    const canvas = document.createElement('canvas');
-    QRCode.toCanvas(canvas, redirectUrl, {
-        width: 400,
-        height: 400,
-        color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-        }
-    }, function (error) {
+    try {
+        // Create canvas for download using QRious
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        
+        // Generate QR code using QRious
+        const qr = new QRious({
+            element: canvas,
+            value: redirectUrl,
+            size: 400,
+            background: 'white',
+            foreground: 'black'
+        });
+        
         // Reset button state
         button.innerHTML = originalText;
         button.disabled = false;
         
-        if (error) {
-            console.error('QR Code generation failed:', error);
-            alert('Failed to generate QR code: ' + error.message);
-            return;
-        }
+        // Download the canvas as PNG
+        const link = document.createElement('a');
+        link.download = `givsimple-qr-${token}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
-        try {
-            // Download the canvas as PNG
-            const link = document.createElement('a');
-            link.download = `givsimple-qr-${token}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (downloadError) {
-            console.error('Download failed:', downloadError);
-            alert('Failed to download QR code');
-        }
-    });
+    } catch (error) {
+        // Reset button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        console.error('QR Code generation failed:', error);
+        alert('Failed to generate QR code: ' + error.message);
+    }
 }
 </script>
 {% endblock %}
