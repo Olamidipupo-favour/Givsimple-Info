@@ -18,3 +18,4 @@ pytest-flask==1.2.0
 pytest-cov==4.1.0
 black==23.7.0
 flake8==6.0.0
+email-validator==2.1.0
