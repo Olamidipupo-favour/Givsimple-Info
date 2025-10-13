@@ -27,7 +27,7 @@ def redirect_token(token):
     Handle token redirects:
     - If token is mapped → 301 redirect to target_url
     - If token exists but unassigned → 302 redirect to /activate?token=<token>
-    - If token not found → 404
+    - If token not found → redirect to activation page
     """
     # Sanitize token input
     token = sanitize_input(token)
@@ -41,7 +41,7 @@ def redirect_token(token):
     if not tag:
         # Log the attempt
         AuditLog.log('system', 'token_not_found', None, {'token': token, 'ip': request.remote_addr})
-        return render_template('404.html'), 404
+        return redirect(url_for('public.activate', token=token), code=302)
     
     # Log the access
     AuditLog.log('system', 'token_accessed', tag.id, {
@@ -110,8 +110,8 @@ def activate():
     tag = Tag.query.filter_by(token=token).first()
     
     if not tag:
-        flash('Token not found.', 'error')
-        return render_template('activate.html', token='')
+        flash('Token not found. You can activate and create it now.', 'info')
+        return render_template('activate.html', token=token)
     
     if tag.status == TagStatus.ACTIVE:
         flash('This token is already activated.', 'info')
