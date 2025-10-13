@@ -52,6 +52,10 @@ def sanitize_input(text):
 
 def validate_csrf_token():
     """Validate CSRF token for API requests"""
+    # Bypass CSRF validation in testing mode
+    from flask import current_app, request
+    if not current_app.config.get('WTF_CSRF_ENABLED', True):
+        return True
     from flask_wtf.csrf import validate_csrf
     try:
         validate_csrf(request.form.get('csrf_token'))

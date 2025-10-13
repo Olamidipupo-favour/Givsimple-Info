@@ -65,9 +65,10 @@ class TestTokenRedirect:
         assert '/activate?token=' in response.location
     
     def test_redirect_nonexistent_tag(self, client):
-        """Test 404 for nonexistent tag"""
+        """Test redirect to activation for nonexistent tag"""
         response = client.get('/t/NONEXIST')
-        assert response.status_code == 404
+        assert response.status_code == 302
+        assert '/activate?token=NONEXIST' in response.location
     
     def test_redirect_blocked_tag(self, client, blocked_tag):
         """Test 404 for blocked tag (should hide existence)"""

@@ -190,12 +190,12 @@ def normalize_payment_handle(handle, email=None, phone=None):
 
 def validate_token_format(token):
     """
-    Validate token format (8-16 alphanumeric characters)
+    Validate token format (6-16 alphanumeric characters)
     """
     if not token:
         return False
     
-    if not re.match(r'^[a-zA-Z0-9]{8,16}$', token):
+    if not re.match(r'^[a-zA-Z0-9]{6,16}$', token):
         return False
     
     return True
