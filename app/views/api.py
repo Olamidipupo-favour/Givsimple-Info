@@ -16,7 +16,7 @@ api_bp = Blueprint('api', __name__)
 def activate():
     """
     Handle token activation:
-    1. Validate token exists & unassigned
+    1. Validate token exists or create it
     2. Normalize payment handle
     3. Create user and activation record
     4. Send confirmation email
@@ -51,7 +51,14 @@ def activate():
         tag = Tag.query.filter_by(token=form_data['token']).first()
         
         if not tag:
-            return jsonify({'error': 'Token not found'}), 404
+            # Create tag on the fly to allow self-service activation
+            tag = Tag(token=form_data['token'], status=TagStatus.UNASSIGNED)
+            db.session.add(tag)
+            db.session.flush()  # Get tag.id
+            AuditLog.log('system', 'token_created', tag.id, {
+                'token': form_data['token'],
+                'ip': request.remote_addr
+            })
         
         if tag.status != TagStatus.UNASSIGNED:
             if tag.status == TagStatus.ACTIVE:
