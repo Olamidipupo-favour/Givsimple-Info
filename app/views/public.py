@@ -7,6 +7,19 @@ from app.utils.security import sanitize_input
 
 public_bp = Blueprint('public', __name__)
 
+# New: Support root-level token URLs by redirecting to /t/<token>
+@public_bp.route('/<regex("(?=.*\\d)[A-Za-zA-Z0-9]{8,16}"):token>')
+@limiter.limit("10 per minute")
+def redirect_root_token(token):
+    """
+    Redirect root-level token URLs (e.g., /ABCDEFG1) to /t/<token>.
+    This matches only 8-16 character alphanumeric tokens that contain at least one digit,
+    preventing conflicts with other endpoints like /activate.
+    """
+    # Sanitize input, then redirect to the canonical handler
+    token = sanitize_input(token)
+    return redirect(url_for('public.redirect_token', token=token), code=302)
+
 @public_bp.route('/t/<token>')
 @limiter.limit("10 per minute")  # Per-IP rate limit
 def redirect_token(token):

@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 import redis
 import os
 from dotenv import load_dotenv
+from werkzeug.routing import BaseConverter
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,9 +17,18 @@ migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address)
 csrf = CSRFProtect()
 
+# Add a regex converter for routes (e.g., to match only specific token formats)
+class RegexConverter(BaseConverter):
+    def __init__(self, url_map, *items):
+        super().__init__(url_map)
+        self.regex = items[0]
+
 def create_app(config_name=None):
     app = Flask(__name__)
     
+    # Register custom converters
+    app.url_map.converters['regex'] = RegexConverter
+
     # Configuration
     if config_name == 'testing':
         app.config.from_object('app.config.TestingConfig')
