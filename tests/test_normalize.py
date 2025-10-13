@@ -140,9 +140,10 @@ class TestTokenValidation:
         assert validate_token_format("abcdefgh") == True
         assert validate_token_format("12345678") == True
         assert validate_token_format("ABC1234567890123") == True  # 16 chars
+        assert validate_token_format("qwerty") == True  # 6 chars now valid
     
     def test_validate_token_invalid_length(self):
-        assert validate_token_format("ABC123") == False  # Too short
+        assert validate_token_format("ABC12") == False  # Too short
         assert validate_token_format("ABC123456789012345") == False  # Too long
     
     def test_validate_token_invalid_characters(self):

@@ -8,13 +8,12 @@ from app.utils.security import sanitize_input
 public_bp = Blueprint('public', __name__)
 
 # New: Support root-level token URLs by redirecting to /t/<token>
-@public_bp.route('/<regex("(?=.*\\d)[A-Za-zA-Z0-9]{8,16}"):token>')
+@public_bp.route('/<regex("^(?!activate$)(?!admin$)(?!api$)(?!pay-by-zelle$)[A-Za-zA-Z0-9]{6,16}$"):token>')
 @limiter.limit("10 per minute")
 def redirect_root_token(token):
     """
     Redirect root-level token URLs (e.g., /ABCDEFG1) to /t/<token>.
-    This matches only 8-16 character alphanumeric tokens that contain at least one digit,
-    preventing conflicts with other endpoints like /activate.
+    This matches 6-16 character alphanumeric tokens, excluding reserved endpoints, preventing conflicts.
     """
     # Sanitize input, then redirect to the canonical handler
     token = sanitize_input(token)
@@ -32,15 +31,19 @@ def redirect_token(token):
     # Sanitize token input
     token = sanitize_input(token)
     
-    if not token or len(token) < 8 or len(token) > 16:
+    if not token or len(token) < 6 or len(token) > 16:
         return render_template('404.html'), 404
     
     # Find the tag
     tag = Tag.query.filter_by(token=token).first()
     
     if not tag:
-        # Log the attempt
-        AuditLog.log('system', 'token_not_found', None, {'token': token, 'ip': request.remote_addr})
+        # Create tag on first visit and redirect to activation
+        new_tag = Tag(token=token, status=TagStatus.UNASSIGNED)
+        db.session.add(new_tag)
+        db.session.flush()  # get id
+        AuditLog.log('system', 'token_created', new_tag.id, {'token': token, 'ip': request.remote_addr, 'source': 'redirect'})
+        db.session.commit()
         return redirect(url_for('public.activate', token=token), code=302)
     
     # Log the access
@@ -57,7 +60,8 @@ def redirect_token(token):
         return render_template('404.html'), 404
     
     elif tag.status == TagStatus.ACTIVE and tag.target_url:
-        # Tag is active and has a target URL - show countdown page
+        # Tag is active and has a target URL - redirect to target URL
+        return redirect(tag.target_url, code=301)
         # Detect payment platform for display
         payment_platform = "Payment Platform"
         if "cash.app" in tag.target_url.lower():
@@ -102,7 +106,7 @@ def activate():
     token = sanitize_input(token)
     
     # Validate token format
-    if len(token) < 8 or len(token) > 16:
+    if len(token) < 6 or len(token) > 16:
         flash('Invalid token format.', 'error')
         return render_template('activate.html', token='')
     
@@ -110,7 +114,13 @@ def activate():
     tag = Tag.query.filter_by(token=token).first()
     
     if not tag:
-        flash('Token not found. You can activate and create it now.', 'info')
+        # Auto-create tag on activation page visit
+        new_tag = Tag(token=token, status=TagStatus.UNASSIGNED)
+        db.session.add(new_tag)
+        db.session.flush()
+        AuditLog.log('system', 'token_created', new_tag.id, {'token': token, 'ip': request.remote_addr, 'source': 'activate_page'})
+        db.session.commit()
+        flash('New token created. You can activate it now.', 'info')
         return render_template('activate.html', token=token)
     
     if tag.status == TagStatus.ACTIVE:

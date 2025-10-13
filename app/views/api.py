@@ -40,7 +40,7 @@ def activate():
             return jsonify({'error': 'All required fields must be provided'}), 400
         
         # Validate token format
-        if not re.match(r'^[a-zA-Z0-9]{8,16}$', form_data['token']):
+        if not re.match(r'^[a-zA-Z0-9]{6,16}$', form_data['token']):
             return jsonify({'error': 'Invalid token format'}), 400
         
         # Validate email format
