@@ -48,13 +48,42 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label for="payment_method" class="form-label">Payment Method *</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Select a payment method</option>
+                                <option value="cashapp">Cash App</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="venmo">Venmo</option>
+                                <option value="zelle">Zelle</option>
+                                <option value="other">Other/Custom URL</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="payment_handle_group">
                             <label for="payment_handle" class="form-label">Payment Handle/URL *</label>
                             <input type="text" class="form-control" id="payment_handle" name="payment_handle" 
                                    required maxlength="500" 
                                    placeholder="e.g., $yourhandle, @username, or https://paypal.me/name">
-                            <div class="form-text">
+                            <div class="form-text" id="payment_handle_help">
                                 Enter your Cash App ($handle), PayPal (paypal.me/name), Venmo (@username), 
                                 or any payment URL you'd like to receive payments at.
+                            </div>
+                        </div>
+                        
+                        <!-- Zelle-specific fields -->
+                        <div id="zelle_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="zelle_account_name" class="form-label">Zelle Account Name *</label>
+                                <input type="text" class="form-control" id="zelle_account_name" name="zelle_account_name" 
+                                       maxlength="100" placeholder="Full name on your Zelle account">
+                                <div class="form-text">Enter the full name associated with your Zelle account.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="zelle_account_identifier" class="form-label">Zelle Email or Phone *</label>
+                                <input type="text" class="form-control" id="zelle_account_identifier" name="zelle_account_identifier" 
+                                       maxlength="120" placeholder="email@example.com or (555) 123-4567">
+                                <div class="form-text">Enter the email address or phone number linked to your Zelle account.</div>
                             </div>
                         </div>
                         
@@ -84,8 +113,91 @@
 </div>
 
 <script>
-// Auto-submit form handling
+// Payment method handling and form submission
 document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const paymentHandleGroup = document.getElementById('payment_handle_group');
+    const paymentHandleInput = document.getElementById('payment_handle');
+    const paymentHandleHelp = document.getElementById('payment_handle_help');
+    const zelleFields = document.getElementById('zelle_fields');
+    const zelleAccountName = document.getElementById('zelle_account_name');
+    const zelleAccountIdentifier = document.getElementById('zelle_account_identifier');
+    
+    // Payment method configurations
+    const paymentConfigs = {
+        cashapp: {
+            placeholder: 'e.g., $yourhandle',
+            helpText: 'Enter your Cash App handle (starts with $)',
+            showZelle: false,
+            sampleValue: 'cashapp'
+        },
+        paypal: {
+            placeholder: 'e.g., paypal.me/yourname or your PayPal email',
+            helpText: 'Enter your PayPal.me link or PayPal email address',
+            showZelle: false,
+            sampleValue: 'paypal'
+        },
+        venmo: {
+            placeholder: 'e.g., @yourusername',
+            helpText: 'Enter your Venmo username (starts with @)',
+            showZelle: false,
+            sampleValue: 'venmo'
+        },
+        zelle: {
+            placeholder: 'zelle',
+            helpText: 'Zelle payments will be processed using your account details below',
+            showZelle: true,
+            sampleValue: 'zelle'
+        },
+        other: {
+            placeholder: 'e.g., https://your-payment-site.com/yourname',
+            helpText: 'Enter any payment URL where you can receive payments',
+            showZelle: false,
+            sampleValue: 'https://example.com/pay'
+        }
+    };
+    
+    // Handle payment method selection
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+            const selectedMethod = this.value;
+            const config = paymentConfigs[selectedMethod];
+            
+            if (config) {
+                // Update payment handle field
+                paymentHandleInput.placeholder = config.placeholder;
+                paymentHandleInput.value = config.sampleValue;
+                paymentHandleHelp.textContent = config.helpText;
+                
+                // Show/hide Zelle fields
+                if (config.showZelle) {
+                    zelleFields.style.display = 'block';
+                    paymentHandleGroup.style.display = 'none';
+                    zelleAccountName.required = true;
+                    zelleAccountIdentifier.required = true;
+                    paymentHandleInput.required = false;
+                } else {
+                    zelleFields.style.display = 'none';
+                    paymentHandleGroup.style.display = 'block';
+                    zelleAccountName.required = false;
+                    zelleAccountIdentifier.required = false;
+                    paymentHandleInput.required = true;
+                }
+            } else {
+                // Reset to default
+                paymentHandleInput.placeholder = 'e.g., $yourhandle, @username, or https://paypal.me/name';
+                paymentHandleInput.value = '';
+                paymentHandleHelp.textContent = 'Enter your Cash App ($handle), PayPal (paypal.me/name), Venmo (@username), or any payment URL you\'d like to receive payments at.';
+                zelleFields.style.display = 'none';
+                paymentHandleGroup.style.display = 'block';
+                zelleAccountName.required = false;
+                zelleAccountIdentifier.required = false;
+                paymentHandleInput.required = true;
+            }
+        });
+    }
+    
+    // Auto-submit form handling
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function(e) {

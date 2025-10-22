@@ -136,6 +136,7 @@ def activate():
 @public_bp.route('/pay-by-zelle')
 def zelle_instructions():
     """Show Zelle payment instructions"""
+    name = request.args.get('name', '').strip()
     email = request.args.get('email', '').strip()
     phone = request.args.get('phone', '').strip()
     
@@ -143,7 +144,7 @@ def zelle_instructions():
         flash('Email or phone number required for Zelle instructions.', 'error')
         return redirect(url_for('public.activate'))
     
-    return render_template('zelle_instructions.html', email=email, phone=phone)
+    return render_template('zelle_instructions.html', name=name, email=email, phone=phone)
 
 @public_bp.route('/')
 def index():
