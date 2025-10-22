@@ -80,6 +80,11 @@ class Activation(db.Model):
     payment_provider = db.Column(db.Enum(PaymentProvider), nullable=False)
     payment_handle_or_url = db.Column(db.String(500), nullable=False)
     resolved_target_url = db.Column(db.String(500), nullable=False)
+    
+    # Zelle-specific fields
+    zelle_account_name = db.Column(db.String(100), nullable=True)  # Name on Zelle account
+    zelle_account_identifier = db.Column(db.String(120), nullable=True)  # Email or phone for Zelle
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def __repr__(self):
@@ -93,6 +98,8 @@ class Activation(db.Model):
             'payment_provider': self.payment_provider.value,
             'payment_handle_or_url': self.payment_handle_or_url,
             'resolved_target_url': self.resolved_target_url,
+            'zelle_account_name': self.zelle_account_name,
+            'zelle_account_identifier': self.zelle_account_identifier,
             'created_at': self.created_at.isoformat()
         }
 

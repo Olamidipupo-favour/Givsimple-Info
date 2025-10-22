@@ -86,27 +86,45 @@ def normalize_venmo(handle):
     
     return f'https://venmo.com/u/{handle}'
 
-def normalize_zelle(email=None, phone=None):
+def normalize_zelle(email=None, phone=None, account_name=None, account_identifier=None):
     """
     Normalize Zelle to internal instruction page
     """
-    if not email and not phone:
+    # Use account_identifier if provided, otherwise fall back to email/phone
+    zelle_identifier = account_identifier or email
+    zelle_phone = phone if not account_identifier else None
+    
+    if not zelle_identifier and not zelle_phone:
         raise PaymentNormalizationError("Zelle requires either email or phone")
     
     # Basic email validation
-    if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-        raise PaymentNormalizationError("Invalid email format for Zelle")
+    if zelle_identifier and '@' in zelle_identifier:
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', zelle_identifier):
+            raise PaymentNormalizationError("Invalid email format for Zelle")
     
     # Basic phone validation (US format)
-    if phone and not re.match(r'^\+?1?[2-9]\d{2}[2-9]\d{2}\d{4}$', phone.replace('-', '').replace(' ', '').replace('(', '').replace(')', '')):
-        raise PaymentNormalizationError("Invalid phone format for Zelle")
+    if zelle_phone:
+        phone_clean = zelle_phone.replace('-', '').replace(' ', '').replace('(', '').replace(')', '').replace('+', '')
+        if not re.match(r'^1?[2-9]\d{2}[2-9]\d{2}\d{4}$', phone_clean):
+            raise PaymentNormalizationError("Invalid phone format for Zelle")
     
-    # Create instruction URL
+    # If account_identifier is a phone number, validate it
+    if zelle_identifier and '@' not in zelle_identifier:
+        phone_clean = zelle_identifier.replace('-', '').replace(' ', '').replace('(', '').replace(')', '').replace('+', '')
+        if not re.match(r'^1?[2-9]\d{2}[2-9]\d{2}\d{4}$', phone_clean):
+            raise PaymentNormalizationError("Invalid phone format for Zelle")
+    
+    # Create instruction URL with account details
     params = []
-    if email:
-        params.append(f'email={email}')
-    if phone:
-        params.append(f'phone={phone}')
+    if account_name:
+        params.append(f'name={account_name}')
+    if zelle_identifier:
+        if '@' in zelle_identifier:
+            params.append(f'email={zelle_identifier}')
+        else:
+            params.append(f'phone={zelle_identifier}')
+    if zelle_phone and zelle_phone != zelle_identifier:
+        params.append(f'phone={zelle_phone}')
     
     return f'https://givsimple.com/pay-by-zelle?{"&".join(params)}'
 
@@ -157,7 +175,7 @@ def detect_payment_provider(handle):
     else:
         return PaymentProvider.GENERIC
 
-def normalize_payment_handle(handle, email=None, phone=None):
+def normalize_payment_handle(handle, email=None, phone=None, zelle_account_name=None, zelle_account_identifier=None):
     """
     Main function to normalize any payment handle
     Returns tuple: (normalized_url, payment_provider)
@@ -176,7 +194,7 @@ def normalize_payment_handle(handle, email=None, phone=None):
         elif provider == PaymentProvider.VENMO:
             normalized_url = normalize_venmo(handle)
         elif provider == PaymentProvider.ZELLE:
-            normalized_url = normalize_zelle(email, phone)
+            normalized_url = normalize_zelle(email, phone, zelle_account_name, zelle_account_identifier)
         else:  # GENERIC
             normalized_url = normalize_generic_url(handle)
         

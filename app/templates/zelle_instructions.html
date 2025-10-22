@@ -27,6 +27,21 @@
                 </ol>
                 
                 <div class="row">
+                    {% if name %}
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-user me-2"></i>Recipient Name
+                                </h6>
+                                <p class="card-text">
+                                    <code class="fs-5">{{ name }}</code>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <div class="col-md-6">
                         <div class="card bg-light">
                             <div class="card-body">
