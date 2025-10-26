@@ -73,10 +73,12 @@ def create_app(config_name=None):
     from app.views.public import public_bp
     from app.views.api import api_bp
     from app.views.admin import admin_bp
+    from app.views.user import user_bp
     
     app.register_blueprint(public_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(user_bp, url_prefix='/user')
     
     # Create tables and initialize admin user
     with app.app_context():

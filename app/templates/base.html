@@ -79,6 +79,53 @@
                     </li>
                 </ul>
             </div>
+            {% else %}
+            <!-- User navigation -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarUserNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarUserNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if session.user_logged_in %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.nfc_write') }}">
+                            <i class="fas fa-nfc-symbol me-1"></i>Write NFC
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.profile_edit') }}">
+                            <i class="fas fa-id-card me-1"></i>Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="navbar-text me-3 d-none d-lg-inline">
+                            <i class="fas fa-user me-1"></i>{{ session.user_email }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user.login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
             {% endif %}
         </div>
     </nav>

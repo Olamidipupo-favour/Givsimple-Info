@@ -2,7 +2,7 @@ import secrets
 import string
 from functools import wraps
 from flask import session, redirect, url_for, flash, request, current_app
-from app.models import AdminUser, AuditLog
+from app.models import AdminUser, AuditLog, User
 from app import db
 
 def generate_secure_token(length=12):
@@ -91,3 +91,25 @@ def is_safe_url(target):
             return True
     
     return False
+
+# New: User session helpers
+
+def user_required(f):
+    """Decorator to require user authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('user_logged_in'):
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('user.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def get_current_user():
+    """Get current authenticated user from session"""
+    if not session.get('user_logged_in'):
+        return None
+    user_email = session.get('user_email')
+    if not user_email:
+        return None
+    return User.query.filter_by(email=user_email).first()

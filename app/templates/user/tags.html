@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Your Tags - GivSimple Info{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-tags me-2"></i>Your Tags</h2>
+  <a href="{{ url_for('user.nfc_write') }}" class="btn btn-primary"><i class="fas fa-microchip me-1"></i>Write NFC</a>
+</div>
+
+{% if tags and tags|length > 0 %}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Status</th>
+          <th>Target URL</th>
+          <th>Last Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tag in tags %}
+        <tr>
+          <td><code>{{ tag.token }}</code></td>
+          <td>{{ tag.status.value|capitalize }}</td>
+          <td>
+            {% if tag.target_url %}
+              <a href="{{ tag.target_url }}" target="_blank" rel="noopener">{{ tag.target_url }}</a>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>{{ tag.updated_at.strftime('%Y-%m-%d %H:%M') if tag.updated_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    You don't have any tags yet. Activate a tag to see it here.
+  </div>
+{% endif %}
+
+<div class="mt-3">
+  <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+  </a>
+</div>
+{% endblock %}

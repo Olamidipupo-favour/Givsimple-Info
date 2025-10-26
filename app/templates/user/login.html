@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Log In - GivSimple Info{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-4 col-md-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white text-center">
+        <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Log In</h4>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.csrf_token }}
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            <i class="fas fa-circle-exclamation me-2"></i>Please check your email and password.
+          </div>
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required />
+          </div>
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="submit">
+              <i class="fas fa-arrow-right-to-bracket me-2"></i>Log In
+            </button>
+            <a href="{{ url_for('user.register') }}" class="btn btn-outline-secondary">Create an account</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - GivSimple Info{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+  <div>
+    <a href="{{ url_for('user.profile_edit') }}" class="btn btn-outline-primary me-2">
+      <i class="fas fa-id-card me-1"></i>Edit Profile
+    </a>
+    <a href="{{ url_for('user.nfc_write') }}" class="btn btn-primary">
+      <i class="fas fa-nfc-symbol me-1"></i>Write NFC
+    </a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4 class="card-title">{{ tags|length }}</h4>
+            <p class="card-text">Your Tags</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-tags fa-2x text-primary"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4 class="card-title">{{ activations }}</h4>
+            <p class="card-text">Activations</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-bolt fa-2x text-success"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h4 class="card-title">{{ accesses }}</h4>
+            <p class="card-text">Profile Accesses</p>
+          </div>
+          <div class="align-self-center">
+            <i class="fas fa-eye fa-2x text-info"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <a class="btn btn-outline-secondary w-100" href="{{ url_for('user.profile_edit') }}">
+          <i class="fas fa-paint-brush me-2"></i>Customize Profile
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a class="btn btn-outline-secondary w-100" href="{{ url_for('user.nfc_write') }}">
+          <i class="fas fa-microchip me-2"></i>Write NFC Tag
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a class="btn btn-outline-secondary w-100" href="{{ url_for('user.manage_tags') }}">
+          <i class="fas fa-tags me-2"></i>Manage Tags
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Preview -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center">
+      {% if profile.avatar_url %}
+      <img src="{{ profile.avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="64" height="64"/>
+      {% else %}
+      <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:64px;height:64px;">
+        <i class="fas fa-user fa-lg"></i>
+      </div>
+      {% endif %}
+      <div>
+        <h5 class="mb-1">{{ profile.display_name or user.name }}</h5>
+        <p class="text-muted mb-0">{{ profile.headline or 'Your digital complementary card' }}</p>
+      </div>
+      <div class="ms-auto">
+        <a href="{{ url_for('public.profile', username=profile.username) }}" class="btn btn-outline-primary">
+          <i class="fas fa-external-link-alt me-1"></i>View Public Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
