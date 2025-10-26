@@ -146,6 +146,16 @@ def zelle_instructions():
     
     return render_template('zelle_instructions.html', name=name, email=email, phone=phone)
 
+@public_bp.route('/u/<username>')
+def profile(username):
+    """Public profile page"""
+    from app.models import Profile
+    username = sanitize_input(username.lower())
+    profile = Profile.query.filter_by(username=username).first()
+    if not profile:
+        abort(404)
+    return render_template('public/profile.html', profile=profile)
+
 @public_bp.route('/')
 def index():
     """Simple status page"""

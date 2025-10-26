@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - GivSimple Info{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <i class="fas fa-id-card me-2"></i>Profile Details
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.csrf_token }}
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            <i class="fas fa-circle-exclamation me-2"></i>Please correct the highlighted fields.
+          </div>
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label" for="display_name">Display Name</label>
+            <input class="form-control" id="display_name" name="display_name" value="{{ form.display_name.data or '' }}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="headline">Headline</label>
+            <input class="form-control" id="headline" name="headline" value="{{ form.headline.data or '' }}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="bio">Bio</label>
+            <textarea class="form-control" id="bio" name="bio" rows="4">{{ form.bio.data or '' }}</textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label" for="avatar_url">Avatar URL</label>
+                <input class="form-control" id="avatar_url" name="avatar_url" value="{{ form.avatar_url.data or '' }}" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label" for="theme">Theme</label>
+                <select class="form-select" id="theme" name="theme">
+                  {% set themes = ['light','dark','blue','emerald'] %}
+                  {% for t in themes %}
+                  <option value="{{ t }}" {% if form.theme.data == t %}selected{% endif %}>{{ t|capitalize }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="links_json">Links JSON</label>
+            <textarea class="form-control" id="links_json" name="links_json" rows="6" placeholder='[{"label":"LinkedIn","url":"https://linkedin.com/in/..."}]'>{{ form.links_json.data or '' }}</textarea>
+            <small class="text-muted">Provide a JSON array of links with label/url.</small>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-save me-2"></i>Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-eye me-2"></i>Live Preview
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-3">
+          {% if form.avatar_url.data %}
+          <img src="{{ form.avatar_url.data }}" alt="Avatar" class="rounded-circle" width="96" height="96"/>
+          {% else %}
+          <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:96px;height:96px;">
+            <i class="fas fa-user fa-2x"></i>
+          </div>
+          {% endif %}
+        </div>
+        <h5 class="text-center">{{ form.display_name.data or user.name }}</h5>
+        <p class="text-muted text-center">{{ form.headline.data or 'Your headline' }}</p>
+        <p>{{ form.bio.data or 'Write something about yourself.' }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

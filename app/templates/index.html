@@ -1,24 +1,58 @@
 {% extends "base.html" %}
 
-{% block title %}GivSimple - Dynamic NFC Redirect Service{% endblock %}
+{% block title %}GivSimple — Tap, Pay, Connect{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body text-center py-5">
-                <i class="fas fa-qrcode fa-4x text-primary mb-4"></i>
-                <h1 class="card-title">GivSimple</h1>
-                <p class="card-text lead">Dynamic NFC Redirect Service</p>
-                <p class="text-muted">Service is running and ready to handle token redirects.</p>
-                
-                <div class="mt-4">
-                    <a href="{{ url_for('admin.login') }}" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt me-2"></i>Admin Login
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="text-center mb-5">
+  <h1 class="display-5 fw-bold">GivSimple</h1>
+  <p class="lead text-muted">Turn any NFC tag into a smart profile or payment link.</p>
+  <div class="d-flex justify-content-center gap-2 mt-3">
+    <a class="btn btn-primary btn-lg" href="{{ url_for('user.register') }}">
+      <i class="fas fa-user-plus me-2"></i>Create Account
+    </a>
+    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('public.activate') }}">
+      <i class="fas fa-bolt me-2"></i>Activate a Tag
+    </a>
+    <a class="btn btn-outline-primary btn-lg" href="{{ url_for('admin.login') }}">
+      <i class="fas fa-shield-halved me-2"></i>Admin
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <i class="fas fa-nfc-symbol fa-2x text-primary mb-3"></i>
+        <h5 class="card-title">Tap</h5>
+        <p class="text-muted">Use any NFC tag. Tap it to open your profile or payment URL instantly.</p>
+      </div>
     </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <i class="fas fa-wand-magic-sparkles fa-2x text-success mb-3"></i>
+        <h5 class="card-title">Self-Service</h5>
+        <p class="text-muted">Activate tokens yourself. No coding needed. Update links anytime.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <i class="fas fa-lock fa-2x text-info mb-3"></i>
+        <h5 class="card-title">Secure</h5>
+        <p class="text-muted">CSRF protection, rate limiting, and safe redirects keep users protected.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-5 text-center">
+  <p class="text-muted">Ready to get started?</p>
+  <a class="btn btn-primary btn-lg" href="{{ url_for('user.register') }}">
+    <i class="fas fa-user-check me-2"></i>Join Now
+  </a>
 </div>
 {% endblock %}

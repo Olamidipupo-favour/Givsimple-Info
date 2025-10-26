@@ -55,9 +55,13 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    # New: password support for secure authentication (nullable for legacy users)
+    password_hash = db.Column(db.String(255), nullable=True)
+    last_login = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     activations = db.relationship('Activation', backref='user', lazy=True)
+    profile = db.relationship('Profile', uselist=False, backref='user', lazy=True)
     
     def __repr__(self):
         return f'<User {self.email}>'
@@ -70,6 +74,43 @@ class User(db.Model):
             'phone': self.phone,
             'created_at': self.created_at.isoformat()
         }
+    
+    def set_password(self, password: str):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password: str) -> bool:
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
+
+class Profile(db.Model):
+    __tablename__ = 'profiles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    username = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    display_name = db.Column(db.String(100), nullable=True)
+    headline = db.Column(db.String(140), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    avatar_url = db.Column(db.String(500), nullable=True)
+    theme = db.Column(db.String(30), nullable=True, default='light')
+    links_json = db.Column(db.Text, nullable=True)  # JSON array of links
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    def __repr__(self):
+        return f'<Profile @{self.username}>'
+    
+    def links(self):
+        if not self.links_json:
+            return []
+        try:
+            return json.loads(self.links_json)
+        except json.JSONDecodeError:
+            return []
+    
+    def set_links(self, links_list):
+        self.links_json = json.dumps(links_list or [])
 
 class Activation(db.Model):
     __tablename__ = 'activations'
