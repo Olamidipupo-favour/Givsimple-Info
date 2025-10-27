@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "8001:8000"
+      - "8003:8000"
     environment:
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
@@ -34,13 +34,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
-      - "5432:5432"
+      - "5435:5432"
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6375:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -49,8 +49,8 @@ services:
   maildev:
     image: maildev/maildev:latest
     ports:
-      - "1080:1080"  # Web interface
-      - "1025:1025"  # SMTP server
+      - "1081:1080"  # Web interface
+      - "1026:1025"  # SMTP server
     environment:
       - MAILDEV_WEB_PORT=1080
       - MAILDEV_SMTP_PORT=1025
