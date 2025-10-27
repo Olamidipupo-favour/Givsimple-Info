@@ -7,17 +7,56 @@ from app.utils.security import sanitize_input
 
 public_bp = Blueprint('public', __name__)
 
-# New: Support root-level token URLs by redirecting to /t/<token>
+# New: Handle root-level token URLs and show countdown for active tags
 @public_bp.route('/<regex("^(?!activate$)(?!admin$)(?!api$)[A-Za-zA-Z0-9]{6,16}$"):token>')
 @limiter.limit("10 per minute")
 def redirect_root_token(token):
     """
-    Redirect root-level token URLs (e.g., /ABCDEFG1) to /t/<token>.
-    This matches 6-16 character alphanumeric tokens, excluding reserved endpoints, preventing conflicts.
+    Handle root-level token URLs (e.g., /ABCDEFG1).
+    - ACTIVE tags: render countdown page to target URL
+    - UNASSIGNED/REGISTERED: redirect to activation page
+    - BLOCKED: return 404
+    - Unknown tokens: auto-create as UNASSIGNED and redirect to activation
     """
-    # Sanitize input, then redirect to the canonical handler
     token = sanitize_input(token)
-    return redirect(url_for('public.redirect_token', token=token), code=302)
+
+    # Basic length validation to avoid reserved paths and invalid tokens
+    if not token or len(token) < 6 or len(token) > 16:
+        return render_template('404.html'), 404
+
+    tag = Tag.query.filter_by(token=token).first()
+
+    if not tag:
+        # Auto-create tag on first visit and redirect to activation
+        new_tag = Tag(token=token, status=TagStatus.UNASSIGNED)
+        db.session.add(new_tag)
+        db.session.flush()  # get id
+        AuditLog.log('system', 'token_created', new_tag.id, {
+            'token': token,
+            'ip': request.remote_addr,
+            'source': 'redirect_root'
+        })
+        db.session.commit()
+        return redirect(url_for('public.activate', token=token), code=302)
+
+    # Log the access for analytics/monitoring
+    AuditLog.log('system', 'token_accessed', tag.id, {
+        'token': token,
+        'status': tag.status.value,
+        'ip': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent', ''),
+        'source': 'redirect_root'
+    })
+
+    if tag.status == TagStatus.BLOCKED:
+        return render_template('404.html'), 404
+    elif tag.status == TagStatus.ACTIVE and tag.target_url:
+        # Render a friendly countdown page instead of immediate redirect
+        return render_template('redirect_countdown.html', target_url=tag.target_url)
+    elif tag.status in (TagStatus.UNASSIGNED, TagStatus.REGISTERED):
+        return redirect(url_for('public.activate', token=token), code=302)
+    else:
+        return render_template('404.html'), 404
 
 @public_bp.route('/t/<token>')
 @limiter.limit("10 per minute")  # Per-IP rate limit
@@ -60,7 +99,10 @@ def redirect_token(token):
         return render_template('404.html'), 404
     
     elif tag.status == TagStatus.ACTIVE and tag.target_url:
-        # Tag is active and has a target URL - redirect to target URL
+        # For browsers, show a friendly countdown page; API clients keep 301
+        accept = request.headers.get('Accept', '')
+        if 'text/html' in accept:
+            return render_template('redirect_countdown.html', target_url=tag.target_url)
         return redirect(tag.target_url, code=301)
     
     elif tag.status == TagStatus.UNASSIGNED:
@@ -130,3 +172,17 @@ def profile(username):
 def index():
     """Simple status page"""
     return render_template('index.html')
+
+@public_bp.route('/activate/success')
+def activation_success():
+    token = request.args.get('token', '').strip()
+    if not token:
+        flash('No token provided.', 'error')
+        return redirect(url_for('public.activate'))
+    token = sanitize_input(token)
+    from app.models import Tag, TagStatus
+    tag = Tag.query.filter_by(token=token).first()
+    if not tag or tag.status != TagStatus.ACTIVE or not tag.target_url:
+        flash('Activation not found or token not active.', 'error')
+        return redirect(url_for('public.activate', token=token))
+    return render_template('redirect_countdown.html', target_url=tag.target_url)

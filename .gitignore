@@ -102,7 +102,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -138,7 +137,6 @@ givsimple.db
 # migrations/versions/*.py
 
 # IDE files
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -195,7 +193,6 @@ coverage.xml
 bandit-report.json
 
 # Local development
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -225,3 +222,4 @@ redis_data/
 # Backup databases
 *.db.backup
 *.sqlite.backup
+config.bat
