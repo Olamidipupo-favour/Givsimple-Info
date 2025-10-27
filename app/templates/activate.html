@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Activate Your Device - GivSimple{% endblock %}
+{% block title %}Activate Your Card - GivSimple{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">
-                    <i class="fas fa-mobile-alt me-2"></i>Activate Your Device
+                    <i class="fas fa-id-card me-2"></i>Activate Your Card
                 </h4>
             </div>
             <div class="card-body">
@@ -23,10 +23,10 @@
                         <input type="hidden" name="token" value="{{ token }}">
                         
                         <div class="mb-3">
-                            <label for="token" class="form-label">Device Token</label>
+                            <label for="token" class="form-label">Card Token</label>
                             <input type="text" class="form-control" id="token" name="token" 
                                    value="{{ token }}" readonly>
-                            <div class="form-text">This is your unique device identifier.</div>
+                            <div class="form-text">This is your unique card identifier.</div>
                         </div>
                         
                         <div class="mb-3">
@@ -47,49 +47,19 @@
                                    maxlength="20" placeholder="+1 (555) 123-4567">
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="payment_method" class="form-label">Payment Method *</label>
-                            <select class="form-select" id="payment_method" name="payment_method" required>
-                                <option value="">Select a payment method</option>
-                                <option value="cashapp">Cash App</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="venmo">Venmo</option>
-                                <option value="zelle">Zelle</option>
-                                <option value="other">Other/Custom URL</option>
-                            </select>
-                        </div>
-                        
                         <div class="mb-3" id="payment_handle_group">
-                            <label for="payment_handle" class="form-label">Payment Handle/URL *</label>
-                            <input type="text" class="form-control" id="payment_handle" name="payment_handle" 
+                            <label for="payment_handle" class="form-label">Card Link (HTTPS URL) *</label>
+                            <input type="url" class="form-control" id="payment_handle" name="payment_handle" 
                                    required maxlength="500" 
-                                   placeholder="e.g., $yourhandle, @username, or https://paypal.me/name">
+                                   placeholder="https://cash.app/$yourhandle">
                             <div class="form-text" id="payment_handle_help">
-                                Enter your Cash App ($handle), PayPal (paypal.me/name), Venmo (@username), 
-                                or any payment URL you'd like to receive payments at.
-                            </div>
-                        </div>
-                        
-                        <!-- Zelle-specific fields -->
-                        <div id="zelle_fields" style="display: none;">
-                            <div class="mb-3">
-                                <label for="zelle_account_name" class="form-label">Zelle Account Name *</label>
-                                <input type="text" class="form-control" id="zelle_account_name" name="zelle_account_name" 
-                                       maxlength="100" placeholder="Full name on your Zelle account">
-                                <div class="form-text">Enter the full name associated with your Zelle account.</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="zelle_account_identifier" class="form-label">Zelle Email or Phone *</label>
-                                <input type="text" class="form-control" id="zelle_account_identifier" name="zelle_account_identifier" 
-                                       maxlength="120" placeholder="email@example.com or (555) 123-4567">
-                                <div class="form-text">Enter the email address or phone number linked to your Zelle account.</div>
+                                Paste a full https URL. Examples: https://cash.app/$handle, https://paypal.me/yourname, https://venmo.com/u/username, or your website.
                             </div>
                         </div>
                         
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check me-2"></i>Activate Device
+                                <i class="fas fa-check me-2"></i>Activate Card
                             </button>
                         </div>
                     </form>
@@ -103,135 +73,14 @@
                     <i class="fas fa-info-circle me-2"></i>How it works
                 </h6>
                 <ul class="list-unstyled mb-0">
-                    <li><i class="fas fa-check text-success me-2"></i>Enter your payment information</li>
-                    <li><i class="fas fa-check text-success me-2"></i>Your device will redirect to your payment page</li>
-                    <li><i class="fas fa-check text-success me-2"></i>Receive payments directly to your account</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Enter your contact info and the HTTPS link you want people to open</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Your card opens your chosen link automatically</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Share your card and connect instantly</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-// Payment method handling and form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethodSelect = document.getElementById('payment_method');
-    const paymentHandleGroup = document.getElementById('payment_handle_group');
-    const paymentHandleInput = document.getElementById('payment_handle');
-    const paymentHandleHelp = document.getElementById('payment_handle_help');
-    const zelleFields = document.getElementById('zelle_fields');
-    const zelleAccountName = document.getElementById('zelle_account_name');
-    const zelleAccountIdentifier = document.getElementById('zelle_account_identifier');
-    
-    // Payment method configurations
-    const paymentConfigs = {
-        cashapp: {
-            placeholder: 'e.g., $yourhandle',
-            helpText: 'Enter your Cash App handle (starts with $)',
-            showZelle: false,
-            sampleValue: 'cashapp'
-        },
-        paypal: {
-            placeholder: 'e.g., paypal.me/yourname or your PayPal email',
-            helpText: 'Enter your PayPal.me link or PayPal email address',
-            showZelle: false,
-            sampleValue: 'paypal'
-        },
-        venmo: {
-            placeholder: 'e.g., @yourusername',
-            helpText: 'Enter your Venmo username (starts with @)',
-            showZelle: false,
-            sampleValue: 'venmo'
-        },
-        zelle: {
-            placeholder: 'zelle',
-            helpText: 'Zelle payments will be processed using your account details below',
-            showZelle: true,
-            sampleValue: 'zelle'
-        },
-        other: {
-            placeholder: 'e.g., https://your-payment-site.com/yourname',
-            helpText: 'Enter any payment URL where you can receive payments',
-            showZelle: false,
-            sampleValue: 'https://example.com/pay'
-        }
-    };
-    
-    // Handle payment method selection
-    if (paymentMethodSelect) {
-        paymentMethodSelect.addEventListener('change', function() {
-            const selectedMethod = this.value;
-            const config = paymentConfigs[selectedMethod];
-            
-            if (config) {
-                // Update payment handle field
-                paymentHandleInput.placeholder = config.placeholder;
-                paymentHandleInput.value = config.sampleValue;
-                paymentHandleHelp.textContent = config.helpText;
-                
-                // Show/hide Zelle fields
-                if (config.showZelle) {
-                    zelleFields.style.display = 'block';
-                    paymentHandleGroup.style.display = 'none';
-                    zelleAccountName.required = true;
-                    zelleAccountIdentifier.required = true;
-                    paymentHandleInput.required = false;
-                } else {
-                    zelleFields.style.display = 'none';
-                    paymentHandleGroup.style.display = 'block';
-                    zelleAccountName.required = false;
-                    zelleAccountIdentifier.required = false;
-                    paymentHandleInput.required = true;
-                }
-            } else {
-                // Reset to default
-                paymentHandleInput.placeholder = 'e.g., $yourhandle, @username, or https://paypal.me/name';
-                paymentHandleInput.value = '';
-                paymentHandleHelp.textContent = 'Enter your Cash App ($handle), PayPal (paypal.me/name), Venmo (@username), or any payment URL you\'d like to receive payments at.';
-                zelleFields.style.display = 'none';
-                paymentHandleGroup.style.display = 'block';
-                zelleAccountName.required = false;
-                zelleAccountIdentifier.required = false;
-                paymentHandleInput.required = true;
-            }
-        });
-    }
-    
-    // Auto-submit form handling
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Activating...';
-            submitBtn.disabled = true;
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Redirect to payment URL
-                    window.location.href = data.redirect_url;
-                } else {
-                    alert('Error: ' + data.error);
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                }
-            })
-            .catch(error => {
-                alert('Error: ' + error.message);
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
-        });
-    }
-});
-</script>
+<!-- Provider-based JS removed: single URL field is sufficient -->
 {% endblock %}

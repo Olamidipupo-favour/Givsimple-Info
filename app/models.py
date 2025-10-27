@@ -10,12 +10,6 @@ class TagStatus(Enum):
     ACTIVE = "active"
     BLOCKED = "blocked"
 
-class PaymentProvider(Enum):
-    CASHAPP = "cashapp"
-    PAYPAL = "paypal"
-    VENMO = "venmo"
-    ZELLE = "zelle"
-    GENERIC = "generic"
 
 class Tag(db.Model):
     __tablename__ = 'tags'
@@ -118,29 +112,20 @@ class Activation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    payment_provider = db.Column(db.Enum(PaymentProvider), nullable=False)
     payment_handle_or_url = db.Column(db.String(500), nullable=False)
     resolved_target_url = db.Column(db.String(500), nullable=False)
-    
-    # Zelle-specific fields
-    zelle_account_name = db.Column(db.String(100), nullable=True)  # Name on Zelle account
-    zelle_account_identifier = db.Column(db.String(120), nullable=True)  # Email or phone for Zelle
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def __repr__(self):
-        return f'<Activation {self.id}: {self.payment_provider.value}>'
+        return f'<Activation {self.id}>'
     
     def to_dict(self):
         return {
             'id': self.id,
             'tag_id': self.tag_id,
             'user_id': self.user_id,
-            'payment_provider': self.payment_provider.value,
             'payment_handle_or_url': self.payment_handle_or_url,
             'resolved_target_url': self.resolved_target_url,
-            'zelle_account_name': self.zelle_account_name,
-            'zelle_account_identifier': self.zelle_account_identifier,
             'created_at': self.created_at.isoformat()
         }
 

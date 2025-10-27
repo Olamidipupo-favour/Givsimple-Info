@@ -143,8 +143,11 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <strong>Payment Provider:</strong> {{ activation.payment_provider.value|title }}<br>
-                                <strong>Payment Handle:</strong> {{ activation.payment_handle_or_url }}<br>
+                                <div class="mb-3">
+                                    <strong>Link Provider:</strong> {{ activation.payment_provider.value|title }}<br>
+                                </div>
+                                <!-- Provider removed from admin view -->
+                                <strong>Link URL / Handle:</strong> {{ activation.payment_handle_or_url }}<br>
                                 <strong>Resolved URL:</strong> 
                                 <a href="{{ activation.resolved_target_url }}" target="_blank">
                                     {{ activation.resolved_target_url }}

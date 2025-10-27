@@ -1,58 +1,254 @@
 {% extends "base.html" %}
 
-{% block title %}GivSimple — Tap, Pay, Connect{% endblock %}
+{% block title %}GivSimple — Modern NFC Cards{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --green-50: #E8F5E9;
+    --green-300: #81C784;
+    --green-500: #43A047;
+    --green-600: #2E7D32;
+    --green-800: #1B5E20;
+  }
+
+  /* Apply a fresh green theme to the homepage only */
+  .theme-green .navbar.bg-primary {
+    background: linear-gradient(90deg, var(--green-800), var(--green-500));
+  }
+  .theme-green .btn-primary {
+    background-color: var(--green-600);
+    border-color: var(--green-600);
+  }
+  .theme-green .btn-primary:hover {
+    background-color: var(--green-800);
+    border-color: var(--green-800);
+  }
+  .theme-green .btn-outline-primary {
+    color: var(--green-600);
+    border-color: var(--green-600);
+  }
+  .theme-green .btn-outline-primary:hover {
+    color: #fff;
+    background-color: var(--green-600);
+    border-color: var(--green-600);
+  }
+  .theme-green .text-primary { color: var(--green-600) !important; }
+  .theme-green .bg-primary { background-color: var(--green-600) !important; }
+  .theme-green .btn { position: relative; overflow: hidden; }
+
+  /* Hero section */
+  .hero {
+    position: relative;
+    padding: 88px 24px;
+    border-radius: 1rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--green-800), var(--green-500));
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(46, 125, 50, 0.35);
+  }
+  .hero::before, .hero::after {
+    content: "";
+    position: absolute;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.18), transparent 60%);
+    filter: blur(2px);
+    animation: float 14s ease-in-out infinite;
+  }
+  .hero::before { top: -60px; left: -60px; animation-delay: 0.6s; }
+  .hero::after { bottom: -60px; right: -60px; animation-delay: 1.4s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
+  }
+
+  .hero-title { letter-spacing: 0.5px; }
+  .hero-subtitle { opacity: 0.92; }
+
+  /* Feature cards */
+  .feature-card {
+    border: none;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    transition: transform 300ms ease, box-shadow 300ms ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 36px rgba(0,0,0,0.12);
+  }
+  .feature-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--green-600), var(--green-500));
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(46, 125, 50, 0.35);
+  }
+
+  /* Tilt preview card */
+  .preview-wrap { perspective: 1000px; }
+  .preview-card {
+    width: 320px; max-width: 90vw; height: 200px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--green-800), var(--green-500));
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    transform-style: preserve-3d;
+    transition: transform 200ms ease;
+    position: relative;
+    margin: 0 auto;
+  }
+  .preview-card .glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.25), transparent 40%);
+    border-radius: inherit;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  .preview-card .chip {
+    position: absolute; top: 20px; left: 20px;
+    width: 48px; height: 36px; border-radius: 6px;
+    background: linear-gradient(180deg, #e0e0e0, #bdbdbd);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .preview-card .title {
+    position: absolute; bottom: 20px; left: 20px; right: 20px;
+    color: #fff; font-weight: 600; letter-spacing: 0.4px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  }
+
+  /* Scroll reveal */
+  .reveal-on-scroll { opacity: 0; transform: translateY(12px); transition: 500ms ease; }
+  .reveal-on-scroll.revealed { opacity: 1; transform: translateY(0); }
+
+  /* Button ripple */
+  .ripple {
+    position: absolute; border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 600ms ease-out;
+    background: rgba(255,255,255,0.35);
+    pointer-events: none;
+  }
+  @keyframes ripple { to { transform: scale(10); opacity: 0; } }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="text-center mb-5">
-  <h1 class="display-5 fw-bold">GivSimple</h1>
-  <p class="lead text-muted">Turn any NFC tag into a smart profile or payment link.</p>
-  <div class="d-flex justify-content-center gap-2 mt-3">
+<div class="theme-green">
+  <!-- Hero -->
+  <section class="hero mb-5 text-center">
+    <div class="container">
+      <h1 class="display-5 fw-bold hero-title mb-3">NFC Cards, Simplified</h1>
+      <p class="lead hero-subtitle mb-4">Create, activate, and share NFC cards that keep your contact info and links in one place.</p>
+      <div class="d-flex justify-content-center gap-2">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('user.register') }}">
+          <i class="fas fa-user-plus me-2"></i>Create Account
+        </a>
+        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('public.activate') }}">
+          <i class="fas fa-id-card me-2"></i>Activate a Card
+        </a>
+        <a class="btn btn-outline-light btn-lg" href="{{ url_for('admin.login') }}">
+          <i class="fas fa-shield-halved me-2"></i>Admin
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive preview -->
+  <div class="preview-wrap mb-5 reveal-on-scroll">
+    <div id="cardPreview" class="preview-card">
+      <div class="glow"></div>
+      <div class="chip"></div>
+      <div class="title">GivSimple NFC Card</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="row g-4">
+    <div class="col-md-4 reveal-on-scroll">
+      <div class="card feature-card h-100 text-center p-4">
+        <div class="feature-icon mb-3"><i class="fas fa-nfc-symbol"></i></div>
+        <h5 class="mb-2">Tap</h5>
+        <p class="text-muted mb-0">Use any NFC tag or card. Tap to open your profile instantly.</p>
+      </div>
+    </div>
+    <div class="col-md-4 reveal-on-scroll">
+      <div class="card feature-card h-100 text-center p-4">
+        <div class="feature-icon mb-3"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <h5 class="mb-2">Self-Service</h5>
+        <p class="text-muted mb-0">Activate tokens yourself. No coding needed. Update links anytime.</p>
+      </div>
+    </div>
+    <div class="col-md-4 reveal-on-scroll">
+      <div class="card feature-card h-100 text-center p-4">
+        <div class="feature-icon mb-3"><i class="fas fa-lock"></i></div>
+        <h5 class="mb-2">Secure</h5>
+        <p class="text-muted mb-0">CSRF protection, rate limiting, and safe redirects keep users protected.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="mt-5 text-center reveal-on-scroll">
+    <p class="text-muted mb-3">Ready to get started?</p>
     <a class="btn btn-primary btn-lg" href="{{ url_for('user.register') }}">
-      <i class="fas fa-user-plus me-2"></i>Create Account
-    </a>
-    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('public.activate') }}">
-      <i class="fas fa-bolt me-2"></i>Activate a Tag
-    </a>
-    <a class="btn btn-outline-primary btn-lg" href="{{ url_for('admin.login') }}">
-      <i class="fas fa-shield-halved me-2"></i>Admin
+      <i class="fas fa-user-check me-2"></i>Join Now
     </a>
   </div>
 </div>
+{% endblock %}
 
-<div class="row g-4">
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body text-center">
-        <i class="fas fa-nfc-symbol fa-2x text-primary mb-3"></i>
-        <h5 class="card-title">Tap</h5>
-        <p class="text-muted">Use any NFC tag. Tap it to open your profile or payment URL instantly.</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body text-center">
-        <i class="fas fa-wand-magic-sparkles fa-2x text-success mb-3"></i>
-        <h5 class="card-title">Self-Service</h5>
-        <p class="text-muted">Activate tokens yourself. No coding needed. Update links anytime.</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-body text-center">
-        <i class="fas fa-lock fa-2x text-info mb-3"></i>
-        <h5 class="card-title">Secure</h5>
-        <p class="text-muted">CSRF protection, rate limiting, and safe redirects keep users protected.</p>
-      </div>
-    </div>
-  </div>
-</div>
+{% block extra_js %}
+<script>
+  // Apply green theme to body for this page
+  document.body.classList.add('theme-green');
 
-<div class="mt-5 text-center">
-  <p class="text-muted">Ready to get started?</p>
-  <a class="btn btn-primary btn-lg" href="{{ url_for('user.register') }}">
-    <i class="fas fa-user-check me-2"></i>Join Now
-  </a>
-</div>
+  // Button ripple effect
+  document.querySelectorAll('.theme-green .btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
+      ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+      this.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  });
+
+  // Tilt interaction for preview card
+  const card = document.getElementById('cardPreview');
+  if (card) {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const rotateY = ((x / rect.width) - 0.5) * 16; // degrees
+      const rotateX = -((y / rect.height) - 0.5) * 12;
+      card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+      card.style.setProperty('--x', `${x}px`);
+      card.style.setProperty('--y', `${y}px`);
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+      card.style.removeProperty('--x');
+      card.style.removeProperty('--y');
+    });
+  }
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal-on-scroll');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  revealEls.forEach(el => io.observe(el));
+</script>
 {% endblock %}

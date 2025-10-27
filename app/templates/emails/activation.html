@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your GivSimple Device is Ready!</title>
+    <title>Your GivSimple Card Link Is Ready!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,33 +52,33 @@
 </head>
 <body>
     <div class="header">
-        <h1>🎉 Your GivSimple Device is Ready!</h1>
+        <h1>🎉 Your GivSimple Card Link Is Ready!</h1>
     </div>
     
     <div class="content">
         <p>Hi {{ user_name }},</p>
         
-        <p>Great news! Your GivSimple device has been successfully activated and is now ready to receive payments.</p>
+        <p>Great news! Your GivSimple card has been successfully activated and is now ready to open your saved card link.</p>
         
         <div class="info-box">
-            <h3>Device Information:</h3>
+            <h3>Card Information:</h3>
             <ul>
                 <li><strong>Token:</strong> {{ token }}</li>
-                <li><strong>Payment URL:</strong> <a href="{{ payment_url }}">{{ payment_url }}</a></li>
+                <li><strong>Card Link:</strong> <a href="{{ payment_url }}">{{ payment_url }}</a></li>
             </ul>
         </div>
         
-        <p>Your device will now redirect users to your payment page when they scan your NFC tag or visit your redirect URL.</p>
+        <p>Your card will now redirect people to your saved link when they scan your NFC card or visit your redirect URL.</p>
         
         <div style="text-align: center;">
-            <a href="{{ payment_url }}" class="button">Test Your Payment Page</a>
+            <a href="{{ payment_url }}" class="button">Open Your Card Link</a>
         </div>
         
         <h3>How it works:</h3>
         <ol>
-            <li>Users scan your NFC tag or visit your redirect URL</li>
-            <li>They are automatically redirected to your payment page</li>
-            <li>They can send you payments using their preferred method</li>
+            <li>People scan your NFC card or visit your redirect URL</li>
+            <li>They are automatically redirected to your saved card link</li>
+            <li>They can follow your link to view contact info or take action</li>
         </ol>
         
         <p>If you have any questions or need support, please don't hesitate to contact us.</p>
@@ -87,7 +87,7 @@
     </div>
     
     <div class="footer">
-        <p>This email was sent because you activated a GivSimple device.</p>
+        <p>This email was sent because you activated a GivSimple card.</p>
         <p>© 2024 GivSimple. All rights reserved.</p>
     </div>
 </body>
