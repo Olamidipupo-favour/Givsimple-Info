@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from app.models import Tag, User, Activation, TagStatus, PaymentProvider, AuditLog
+from app.models import Tag, User, Activation, TagStatus, AuditLog
 from app.schemas import ActivationForm
-from app.utils.normalize import normalize_payment_handle, PaymentNormalizationError
+from app.utils.normalize import normalize_card_link, PaymentNormalizationError
 from app.utils.security import sanitize_input, validate_csrf_token
 from app.email import send_activation_email
 from app import db, limiter
@@ -32,9 +32,7 @@ def activate():
             'name': sanitize_input(request.form.get('name', '')),
             'email': sanitize_input(request.form.get('email', '')),
             'phone': sanitize_input(request.form.get('phone', '')),
-            'payment_handle': sanitize_input(request.form.get('payment_handle', '')),
-            'zelle_account_name': sanitize_input(request.form.get('zelle_account_name', '')),
-            'zelle_account_identifier': sanitize_input(request.form.get('zelle_account_identifier', ''))
+            'payment_handle': sanitize_input(request.form.get('payment_handle', ''))
         }
         
         # Validate required fields
@@ -49,24 +47,7 @@ def activate():
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', form_data['email']):
             return jsonify({'error': 'Invalid email format'}), 400
         
-        # Validate Zelle-specific fields if Zelle is selected
-        if 'zelle' in form_data['payment_handle'].lower():
-            if not form_data['zelle_account_name'] or not form_data['zelle_account_name'].strip():
-                return jsonify({'error': 'Zelle account name is required when using Zelle'}), 400
-            if not form_data['zelle_account_identifier'] or not form_data['zelle_account_identifier'].strip():
-                return jsonify({'error': 'Zelle account identifier (email or phone) is required when using Zelle'}), 400
-            
-            # Validate Zelle account identifier format
-            identifier = form_data['zelle_account_identifier'].strip()
-            if '@' in identifier:
-                # Email validation
-                if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', identifier):
-                    return jsonify({'error': 'Invalid email format for Zelle account identifier'}), 400
-            else:
-                # Phone validation
-                phone_clean = identifier.replace('-', '').replace(' ', '').replace('(', '').replace(')', '').replace('+', '')
-                if not re.match(r'^1?[2-9]\d{2}[2-9]\d{2}\d{4}$', phone_clean):
-                    return jsonify({'error': 'Invalid phone format for Zelle account identifier'}), 400
+
         
         # Find the tag
         tag = Tag.query.filter_by(token=form_data['token']).first()
@@ -113,31 +94,19 @@ def activate():
             db.session.add(user)
             db.session.flush()  # Get user ID
         
-        # Normalize payment handle
+        # Normalize card link (URL-only)
         try:
-            normalized_url, payment_provider = normalize_payment_handle(
-                form_data['payment_handle'],
-                email=form_data['email'],
-                phone=form_data['phone'],
-                zelle_account_name=form_data.get('zelle_account_name'),
-                zelle_account_identifier=form_data.get('zelle_account_identifier')
-            )
+            normalized_url = normalize_card_link(form_data['payment_handle'])
         except PaymentNormalizationError as e:
-            return jsonify({'error': f'Invalid payment handle: {str(e)}'}), 400
+            return jsonify({'error': f'Invalid card link: {str(e)}'}), 400
         
         # Create activation record
         activation = Activation(
             tag_id=tag.id,
             user_id=user.id,
-            payment_provider=payment_provider,
             payment_handle_or_url=form_data['payment_handle'],
             resolved_target_url=normalized_url
         )
-        
-        # Add Zelle-specific fields if Zelle is the payment provider
-        if payment_provider == PaymentProvider.ZELLE:
-            activation.zelle_account_name = form_data['zelle_account_name'].strip() if form_data['zelle_account_name'] else None
-            activation.zelle_account_identifier = form_data['zelle_account_identifier'].strip() if form_data['zelle_account_identifier'] else None
         db.session.add(activation)
         
         # Update tag status and target URL
@@ -148,7 +117,6 @@ def activate():
         # Log the activation
         AuditLog.log('system', 'token_activated', tag.id, {
             'user_email': user.email,
-            'payment_provider': payment_provider.value,
             'resolved_url': normalized_url,
             'ip': request.remote_addr
         })

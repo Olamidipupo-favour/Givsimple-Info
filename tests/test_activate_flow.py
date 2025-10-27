@@ -2,14 +2,13 @@ import pytest
 import json
 from flask import Flask
 from app import create_app, db
-from app.models import Tag, TagStatus, User, Activation, PaymentProvider
+from app.models import Tag, TagStatus, User, Activation
 from app.views.api import api_bp
 
 @pytest.fixture
 def app():
     """Create test app"""
     app = create_app('testing')
-    app.register_blueprint(api_bp)
     
     with app.app_context():
         db.create_all()
@@ -56,7 +55,7 @@ class TestActivationAPI:
             'name': 'Test User',
             'email': 'test@example.com',
             'phone': '+1234567890',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -80,31 +79,32 @@ class TestActivationAPI:
             
             activation = Activation.query.filter_by(tag_id=tag.id).first()
             assert activation is not None
-            assert activation.payment_provider == PaymentProvider.CASHAPP
-    
+            assert activation.resolved_target_url.startswith('https://')
+            assert activation.payment_handle_or_url == 'https://cash.app/$testuser'
+
     def test_activate_nonexistent_token(self, client):
-        """Test activation with nonexistent token"""
+        """Test activation with nonexistent token (auto-create)"""
         data = {
             'token': 'NONEXIST',
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
-        assert response.status_code == 404
+        assert response.status_code == 200
         
         result = json.loads(response.data)
-        assert 'error' in result
-        assert 'not found' in result['error'].lower()
-    
+        assert result['success'] == True
+        assert 'redirect_url' in result
+
     def test_activate_already_active(self, client, active_tag):
         """Test activation of already active tag"""
         data = {
             'token': active_tag.token,
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -120,7 +120,7 @@ class TestActivationAPI:
             'token': blocked_tag.token,
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -151,7 +151,7 @@ class TestActivationAPI:
             'token': unassigned_tag.token,
             'name': 'Test User',
             'email': 'invalid-email',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -167,7 +167,7 @@ class TestActivationAPI:
             'token': 'INVALID!',
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': '$testuser'
+            'payment_handle': 'https://cash.app/$testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -178,12 +178,12 @@ class TestActivationAPI:
         assert 'token format' in result['error'].lower()
     
     def test_activate_invalid_payment_handle(self, client, unassigned_tag):
-        """Test activation with invalid payment handle"""
+        """Test activation with invalid card link"""
         data = {
             'token': unassigned_tag.token,
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': 'invalid@domain.com'  # Not a valid payment handle
+            'payment_handle': 'invalid@domain.com'
         }
         
         response = client.post('/api/activate', data=data)
@@ -191,15 +191,15 @@ class TestActivationAPI:
         
         result = json.loads(response.data)
         assert 'error' in result
-        assert 'payment handle' in result['error'].lower()
+        assert 'card link' in result['error'].lower()
     
     def test_activate_paypal_handle(self, client, unassigned_tag):
-        """Test activation with PayPal handle"""
+        """Test activation with PayPal URL"""
         data = {
             'token': unassigned_tag.token,
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': 'paypal.me/testuser'
+            'payment_handle': 'https://paypal.me/testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -210,12 +210,12 @@ class TestActivationAPI:
         assert 'paypal.me' in result['redirect_url']
     
     def test_activate_venmo_handle(self, client, unassigned_tag):
-        """Test activation with Venmo handle"""
+        """Test activation with Venmo URL"""
         data = {
             'token': unassigned_tag.token,
             'name': 'Test User',
             'email': 'test@example.com',
-            'payment_handle': '@testuser'
+            'payment_handle': 'https://venmo.com/@testuser'
         }
         
         response = client.post('/api/activate', data=data)
@@ -224,9 +224,10 @@ class TestActivationAPI:
         result = json.loads(response.data)
         assert result['success'] == True
         assert 'venmo.com' in result['redirect_url']
-    
+
+    @pytest.mark.skip(reason="Provider-specific Zelle flow removed")
     def test_activate_zelle_handle(self, client, unassigned_tag):
-        """Test activation with Zelle handle"""
+        """Test activation with Zelle handle (removed)"""
         data = {
             'token': unassigned_tag.token,
             'name': 'Test User',
@@ -234,14 +235,9 @@ class TestActivationAPI:
             'phone': '+1234567890',
             'payment_handle': 'zelle'
         }
-        
         response = client.post('/api/activate', data=data)
         assert response.status_code == 200
-        
-        result = json.loads(response.data)
-        assert result['success'] == True
-        assert 'givsimple.com/pay-by-zelle' in result['redirect_url']
-    
+
     def test_activate_existing_user(self, client, unassigned_tag):
         """Test activation with existing user"""
         with client.application.app_context():
@@ -254,7 +250,7 @@ class TestActivationAPI:
                 'token': unassigned_tag.token,
                 'name': 'Test User',
                 'email': 'test@example.com',
-                'payment_handle': '$testuser'
+                'payment_handle': 'https://cash.app/$testuser'
             }
             
             response = client.post('/api/activate', data=data)
@@ -281,8 +277,7 @@ class TestActivationAPI:
             activation = Activation(
                 tag_id=tag.id,
                 user_id=user.id,
-                payment_provider=PaymentProvider.CASHAPP,
-                payment_handle_or_url='$test',
+                payment_handle_or_url='https://cash.app/$test',
                 resolved_target_url='https://cash.app/$test'
             )
             db.session.add(activation)
@@ -292,7 +287,7 @@ class TestActivationAPI:
                 'token': unassigned_tag.token,
                 'name': 'Test User',
                 'email': 'test@example.com',
-                'payment_handle': '$testuser'
+                'payment_handle': 'https://cash.app/$testuser'
             }
             
             response = client.post('/api/activate', data=data)
@@ -300,7 +295,7 @@ class TestActivationAPI:
             
             result = json.loads(response.data)
             assert 'error' in result
-            assert 'already been activated' in result['error'].lower()
+            assert 'activated by this user' in result['error'].lower()
 
 class TestHealthEndpoint:
     def test_health_endpoint(self, client):

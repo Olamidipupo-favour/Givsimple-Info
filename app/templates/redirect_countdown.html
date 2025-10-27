@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Redirecting... - GivSimple{% endblock %}
+{% block title %}Redirecting to Your Card Link - GivSimple{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -11,29 +11,18 @@
                     <i class="fas fa-external-link-alt fa-4x text-primary"></i>
                 </div>
                 
-                <h2 class="mb-3">Redirecting to Payment</h2>
+                <h2 class="mb-3">Redirecting to Your Link</h2>
                 <p class="lead text-muted mb-4">
-                    You will be redirected to your payment page in <span id="countdown" class="fw-bold text-primary">10</span> seconds.
+                    You will be redirected to your saved card link in <span id="countdown" class="fw-bold text-primary">5</span> seconds.
                 </p>
-                
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Payment Platform:</strong> {{ payment_platform }}
-                </div>
                 
                 <div class="mt-4">
                     <a href="{{ target_url }}" class="btn btn-success btn-lg me-3" id="redirect-btn">
-                        <i class="fas fa-external-link-alt me-2"></i>Go to Payment Now
+                        <i class="fas fa-external-link-alt me-2"></i>Open Link Now
                     </a>
                     <button onclick="history.back()" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>Go Back
                     </button>
-                </div>
-                
-                <div class="mt-4">
-                    <small class="text-muted">
-                        If you don't want to wait, click "Go to Payment Now" above.
-                    </small>
                 </div>
             </div>
         </div>
@@ -41,8 +30,8 @@
 </div>
 
 <script>
-let countdown = 10;
-const targetUrl = '{{ target_url }}';
+let countdown = 5;
+const destinationUrl = '{{ target_url }}';
 const countdownElement = document.getElementById('countdown');
 const redirectBtn = document.getElementById('redirect-btn');
 
@@ -50,7 +39,7 @@ const redirectBtn = document.getElementById('redirect-btn');
 function updateCountdown() {
     countdownElement.textContent = countdown;
     if (countdown <= 0) {
-        window.location.href = targetUrl;
+        window.location.href = destinationUrl;
         return;
     }
     countdown--;
@@ -63,7 +52,7 @@ updateCountdown();
 // Handle instant redirect button
 redirectBtn.addEventListener('click', function(e) {
     e.preventDefault();
-    window.location.href = targetUrl;
+    window.location.href = destinationUrl;
 });
 </script>
 {% endblock %}

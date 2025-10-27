@@ -8,7 +8,7 @@ from app.utils.security import sanitize_input
 public_bp = Blueprint('public', __name__)
 
 # New: Support root-level token URLs by redirecting to /t/<token>
-@public_bp.route('/<regex("^(?!activate$)(?!admin$)(?!api$)(?!pay-by-zelle$)[A-Za-zA-Z0-9]{6,16}$"):token>')
+@public_bp.route('/<regex("^(?!activate$)(?!admin$)(?!api$)[A-Za-zA-Z0-9]{6,16}$"):token>')
 @limiter.limit("10 per minute")
 def redirect_root_token(token):
     """
@@ -62,24 +62,6 @@ def redirect_token(token):
     elif tag.status == TagStatus.ACTIVE and tag.target_url:
         # Tag is active and has a target URL - redirect to target URL
         return redirect(tag.target_url, code=301)
-        # Detect payment platform for display
-        payment_platform = "Payment Platform"
-        if "cash.app" in tag.target_url.lower():
-            payment_platform = "Cash App"
-        elif "paypal.me" in tag.target_url.lower() or "paypal.com" in tag.target_url.lower():
-            payment_platform = "PayPal"
-        elif "venmo.com" in tag.target_url.lower():
-            payment_platform = "Venmo"
-        elif "zelle" in tag.target_url.lower():
-            payment_platform = "Zelle"
-        elif "apple.com" in tag.target_url.lower():
-            payment_platform = "Apple Pay"
-        elif "google.com" in tag.target_url.lower():
-            payment_platform = "Google Pay"
-        
-        return render_template('redirect_countdown.html', 
-                             target_url=tag.target_url,
-                             payment_platform=payment_platform)
     
     elif tag.status == TagStatus.UNASSIGNED:
         # Tag exists but is unassigned - redirect to activation page
@@ -133,18 +115,6 @@ def activate():
     
     return render_template('activate.html', token=token)
 
-@public_bp.route('/pay-by-zelle')
-def zelle_instructions():
-    """Show Zelle payment instructions"""
-    name = request.args.get('name', '').strip()
-    email = request.args.get('email', '').strip()
-    phone = request.args.get('phone', '').strip()
-    
-    if not email and not phone:
-        flash('Email or phone number required for Zelle instructions.', 'error')
-        return redirect(url_for('public.activate'))
-    
-    return render_template('zelle_instructions.html', name=name, email=email, phone=phone)
 
 @public_bp.route('/u/<username>')
 def profile(username):
