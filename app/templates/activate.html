@@ -47,13 +47,13 @@
                                    maxlength="20" placeholder="+1 (555) 123-4567">
                         </div>
                         
-                        <div class="mb-3" id="payment_handle_group">
-                            <label for="payment_handle" class="form-label">Card Link (HTTPS URL) *</label>
+                        <div class="mb-3">
+                            <label for="payment_handle" class="form-label">Card Link (Optional)</label>
                             <input type="url" class="form-control" id="payment_handle" name="payment_handle" 
-                                   required maxlength="500" 
-                                   placeholder="https://cash.app/$yourhandle">
+                                   placeholder="https://example.com/your-profile">
                             <div class="form-text" id="payment_handle_help">
-                                Paste a full https URL. Examples: https://cash.app/$handle, https://paypal.me/yourname, https://venmo.com/u/username, or your website.
+                                <strong>Optional:</strong> Provide an HTTPS URL to link to your existing business card or profile. 
+                                <br><strong>Leave blank</strong> to automatically generate a digital business card with your contact information.
                             </div>
                         </div>
                         
@@ -73,9 +73,10 @@
                     <i class="fas fa-info-circle me-2"></i>How it works
                 </h6>
                 <ul class="list-unstyled mb-0">
-                    <li><i class="fas fa-check text-success me-2"></i>Enter your contact info and the HTTPS link you want people to open</li>
-                    <li><i class="fas fa-check text-success me-2"></i>Your card opens your chosen link automatically</li>
-                    <li><i class="fas fa-check text-success me-2"></i>Share your card and connect instantly</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Enter your contact information</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Optionally provide an existing business card URL, or we'll create one for you</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Your NFC card will redirect to your business card automatically</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Share your card and connect with contacts instantly</li>
                 </ul>
             </div>
         </div>

@@ -5,6 +5,7 @@ from app.models import Tag, User, Activation, TagStatus, AuditLog
 from app.schemas import ActivationForm
 from app.utils.normalize import normalize_card_link, PaymentNormalizationError
 from app.utils.security import sanitize_input, validate_csrf_token
+from app.utils.business_card import generate_default_business_card_url, ensure_user_has_profile, update_profile_with_business_card_defaults
 from app.email import send_activation_email
 from app import db, limiter
 import re
@@ -94,11 +95,28 @@ def activate():
             db.session.add(user)
             db.session.flush()  # Get user ID
         
-        # Normalize card link (URL-only)
-        try:
-            normalized_url = normalize_card_link(form_data['payment_handle'])
-        except PaymentNormalizationError as e:
-            return jsonify({'error': f'Invalid card link: {str(e)}'}), 400
+        # Handle card link - either normalize provided URL or generate business card
+        if form_data.get('payment_handle') and form_data['payment_handle'].strip():
+            # User provided a card link - normalize it
+            try:
+                normalized_url = normalize_card_link(form_data['payment_handle'])
+                card_link_source = 'user_provided'
+            except PaymentNormalizationError as e:
+                return jsonify({'error': f'Invalid card link: {str(e)}'}), 400
+        else:
+            # No card link provided - automatically generate business card
+            try:
+                # Ensure user has a profile and generate business card URL
+                profile = ensure_user_has_profile(user)
+                update_profile_with_business_card_defaults(profile, user)
+                normalized_url = generate_default_business_card_url(user)
+                card_link_source = 'auto_generated'
+                
+                # Use a placeholder for the payment_handle field since it's required
+                form_data['payment_handle'] = normalized_url
+            except Exception as e:
+                current_app.logger.error(f"Failed to generate business card: {e}")
+                return jsonify({'error': 'Failed to generate business card'}), 500
         
         # Create activation record
         activation = Activation(
@@ -118,6 +136,7 @@ def activate():
         AuditLog.log('system', 'token_activated', tag.id, {
             'user_email': user.email,
             'resolved_url': normalized_url,
+            'card_link_source': card_link_source,
             'ip': request.remote_addr
         })
         

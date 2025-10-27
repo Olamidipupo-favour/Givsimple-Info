@@ -9,7 +9,7 @@ class ActivationForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(min=1, max=100)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     phone = StringField('Phone', validators=[Optional(), Length(max=20)])
-    payment_handle = StringField('Payment URL', validators=[DataRequired(), URL(), Length(max=500)])
+    payment_handle = StringField('Card Link URL (Optional)', validators=[Optional(), URL(), Length(max=500)])
     
     def validate_token(self, field):
         # Check if token contains only alphanumeric characters
@@ -17,12 +17,10 @@ class ActivationForm(FlaskForm):
             raise ValidationError('Token must contain only letters and numbers')
     
     def validate_payment_handle(self, field):
-        # Require full HTTPS URL
+        # If provided, require full HTTPS URL
         data = (field.data or '').strip()
-        if not data:
-            raise ValidationError('Payment URL cannot be empty')
-        if not data.lower().startswith('https://'):
-            raise ValidationError('Payment URL must start with https://')
+        if data and not data.lower().startswith('https://'):
+            raise ValidationError('Card Link URL must start with https://')
 
 class AdminLoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
