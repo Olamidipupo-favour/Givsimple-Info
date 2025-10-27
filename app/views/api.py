@@ -36,9 +36,9 @@ def activate():
             'payment_handle': sanitize_input(request.form.get('payment_handle', ''))
         }
         
-        # Validate required fields
-        if not all([form_data['token'], form_data['name'], form_data['email'], form_data['payment_handle']]):
-            return jsonify({'error': 'All required fields must be provided'}), 400
+        # Validate required fields (card link optional)
+        if not all([form_data['token'], form_data['name'], form_data['email']]):
+            return jsonify({'error': 'Token, name, and email are required'}), 400
         
         # Validate token format
         if not re.match(r'^[a-zA-Z0-9]{6,16}$', form_data['token']):
