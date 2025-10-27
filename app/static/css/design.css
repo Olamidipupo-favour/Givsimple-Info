@@ -61,8 +61,19 @@
 
   /* Bootstrap bridge */
   --bs-primary: var(--brand-600);
+  --bs-primary-rgb: 56, 142, 60; /* #388E3C */
   --bs-success: var(--brand-600);
+  --bs-success-rgb: 56, 142, 60;
+  --bs-info: var(--brand-600);
+  --bs-info-rgb: 56, 142, 60;
 }
+
+/* Override Bootstrap primary/info to brand green */
+.bg-primary { background-color: var(--brand-600) !important; color: #fff !important; }
+.bg-info { background-color: var(--brand-600) !important; color: #fff !important; }
+.text-info { color: var(--brand-600) !important; }
+.badge.bg-info { background-color: var(--brand-600) !important; }
+.alert-info { background-color: var(--brand-100) !important; border-color: var(--brand-300) !important; color: var(--brand-800) !important; }
 
 /* Base & Typography - Enhanced for Accessibility */
 html { scroll-behavior: smooth; }
