@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, redirect, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import Tag, User, Activation, TagStatus, AuditLog
@@ -150,6 +150,18 @@ def activate():
             current_app.logger.error(f"Failed to send activation email: {e}")
             # Don't fail the activation if email fails
         
+        # Prefer a human-friendly flow for browser form submissions
+        # If the request contains form data (non-JSON), redirect to success page
+        if request.form and not request.is_json:
+            return redirect(url_for('public.activation_success', token=tag.token), code=303)
+        
+        # Fallback: inspect headers for HTML form posts
+        accept = request.headers.get('Accept', '')
+        content_type = request.headers.get('Content-Type', '')
+        if ('text/html' in accept) or ('application/x-www-form-urlencoded' in content_type):
+            return redirect(url_for('public.activation_success', token=tag.token), code=303)
+        
+        # API clients receive JSON
         return jsonify({
             'success': True,
             'message': 'Token activated successfully',
