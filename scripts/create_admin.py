@@ -25,7 +25,10 @@ def create_admin_user():
     with app.app_context():
         # Get admin credentials from app config
         admin_email = app.config.get('ADMIN_EMAIL', 'admin@givsimple.com')
-        admin_password = app.config.get('ADMIN_PASSWORD', 'admin123')
+        admin_password = app.config.get('ADMIN_PASSWORD')
+        if not admin_password:
+            print('Set ADMIN_PASSWORD before creating an admin.')
+            return 1
         
         # Check if admin already exists
         existing_admin = AdminUser.query.filter_by(email=admin_email).first()
@@ -51,7 +54,9 @@ def create_admin_user():
 
 def main():
     try:
-        create_admin_user()
+        code = create_admin_user()
+        if code:
+            sys.exit(code)
     except Exception as e:
         print(f"Error creating admin user: {e}")
         sys.exit(1)

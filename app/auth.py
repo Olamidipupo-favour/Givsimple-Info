@@ -8,6 +8,12 @@ def create_default_admin():
     admin_count = AdminUser.query.count()
     
     if admin_count == 0:
+        if not Config.ADMIN_PASSWORD:
+            current_app.logger.warning(
+                "ADMIN_PASSWORD is not set; skipping default admin creation"
+            )
+            return None
+
         admin = AdminUser(
             email=Config.ADMIN_EMAIL,
             is_active=True

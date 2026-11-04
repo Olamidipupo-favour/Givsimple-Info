@@ -16,7 +16,7 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER:-noreply@givsimple.com}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@givsimple.com}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     depends_on:
       - db
       - redis

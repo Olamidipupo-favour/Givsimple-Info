@@ -21,7 +21,7 @@ class Config:
     
     # Admin configuration
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@givsimple.com')
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
     
     # Payment domains
     ALLOWED_PAYMENT_DOMAINS = [
